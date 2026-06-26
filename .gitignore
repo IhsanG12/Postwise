@@ -1,0 +1,28 @@
+# Secrets — NEVER commit. API keys live only in backend env vars.
+.env
+.env.*
+!.env.example
+
+# Node / Next.js
+node_modules/
+.next/
+out/
+dist/
+build/
+*.tsbuildinfo
+
+# Logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+*.log
+
+# OS / editor
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+
+# Uploads / generated media (don't bloat the repo)
+/backend/uploads/
+/backend/tmp/

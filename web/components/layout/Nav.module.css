@@ -1,0 +1,117 @@
+.header {
+  position: sticky;
+  top: 0;
+  z-index: 40;
+  background: color-mix(in srgb, var(--bg) 82%, transparent);
+  backdrop-filter: blur(14px);
+  border-bottom: 1px solid var(--line);
+}
+
+.inner {
+  max-width: var(--maxw);
+  margin: 0 auto;
+  padding: 0 24px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: 64px;
+}
+
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  font-weight: 600;
+  font-size: 17px;
+  letter-spacing: -0.02em;
+  cursor: pointer;
+  text-decoration: none;
+  background: none;
+  border: none;
+  color: var(--fg);
+}
+
+.dot {
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: var(--fg);
+  position: relative;
+  flex-shrink: 0;
+}
+
+.dot::after {
+  content: "";
+  position: absolute;
+  inset: 2.5px;
+  border-radius: 50%;
+  background: var(--accent);
+}
+
+.right {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.credits {
+  font-size: 13px;
+  color: var(--muted);
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.credits b {
+  color: var(--fg);
+}
+
+.signOut {
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--muted);
+  font-family: inherit;
+  padding: 0;
+  transition: color 0.15s;
+}
+
+.signOut:hover {
+  color: var(--fg);
+}
+
+.upgrade {
+  background: var(--fg);
+  color: #fff;
+  border: none;
+  cursor: pointer;
+  font-weight: 600;
+  font-size: 14px;
+  border-radius: 999px;
+  padding: 9px 18px;
+  text-decoration: none;
+  display: inline-block;
+  font-family: inherit;
+  transition: background 0.15s var(--ease), transform 0.15s var(--ease);
+}
+
+.upgrade:hover {
+  background: #27272b;
+}
+
+.upgrade:active {
+  transform: scale(0.97);
+}
+
+@media (max-width: 400px) {
+  .credits {
+    display: none;
+  }
+
+  .inner {
+    padding: 0 16px;
+  }
+}

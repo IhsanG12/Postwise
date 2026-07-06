@@ -1,0 +1,326 @@
+.wrap {
+  padding: 8px 0 80px;
+}
+
+.back {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  color: var(--muted);
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  margin: 26px 0 0;
+  text-decoration: none;
+  transition: color 0.15s;
+}
+
+.back:hover {
+  color: var(--fg);
+}
+
+.crumb {
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--accent-ink);
+  margin-top: 18px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.chipPlat {
+  padding: 3px 10px;
+  border-radius: 999px;
+  color: #fff;
+  font-size: 11px;
+  letter-spacing: 0.02em;
+  text-transform: none;
+}
+
+.stepH {
+  margin: 12px 0 4px;
+  font-size: 38px;
+  font-weight: 600;
+  letter-spacing: -0.03em;
+}
+
+.stepSub {
+  margin: 0 0 30px;
+  color: var(--muted);
+  font-size: 16.5px;
+  max-width: 52ch;
+}
+
+/* ─── Results layout ─────────────────────────────────────────────────── */
+
+.resultsGrid {
+  display: grid;
+  grid-template-columns: 1.55fr 0.95fr;
+  gap: 30px;
+  align-items: start;
+}
+
+/* Loading shimmer animation */
+@keyframes shimmer {
+  to { background-position: -200% 0; }
+}
+
+.shimmer {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(100deg, #f0efeb 30%, #f8f7f4 50%, #f0efeb 70%);
+  background-size: 200% 100%;
+  animation: shimmer 1.3s infinite;
+}
+
+/* Tile shimmer grids */
+.slidesShimmerGrid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 14px;
+}
+
+.videoShimmerWrap {
+  display: flex;
+}
+
+.shimmerTile {
+  position: relative;
+  aspect-ratio: 4 / 5;
+  border-radius: 14px;
+  overflow: hidden;
+  border: 1px solid var(--line);
+  background: var(--surface);
+}
+
+.shimmerTileVideo {
+  aspect-ratio: 9 / 16;
+  max-width: 260px;
+  width: 100%;
+}
+
+/* Sidecard shimmer */
+.sidecardShimmer {
+  border-radius: 18px;
+  height: 220px;
+  margin-bottom: 16px;
+  background: linear-gradient(100deg, #f0efeb 30%, #f8f7f4 50%, #f0efeb 70%);
+  background-size: 200% 100%;
+  animation: shimmer 1.3s infinite;
+}
+
+/* ─── Results bar ────────────────────────────────────────────────────── */
+
+.resultsBar {
+  display: flex;
+  gap: 12px;
+  margin-top: 26px;
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+.saveAllBtn {
+  border: none;
+  cursor: pointer;
+  font-weight: 600;
+  font-size: 15.5px;
+  border-radius: 999px;
+  padding: 14px 26px;
+  background: var(--fg);
+  color: #fff;
+  font-family: inherit;
+  transition: transform 0.15s var(--ease), background 0.15s;
+}
+
+.saveAllBtn:hover {
+  background: #27272b;
+}
+
+.saveAllBtn:active {
+  transform: scale(0.97);
+}
+
+.makeAnotherBtn {
+  display: inline-block;
+  border: 1px solid var(--line-strong);
+  background: var(--surface);
+  color: var(--fg);
+  border-radius: 999px;
+  padding: 14px 26px;
+  font-size: 15.5px;
+  font-weight: 600;
+  transition: background 0.15s;
+  text-decoration: none;
+}
+
+.makeAnotherBtn:hover {
+  background: #f4f3ee;
+}
+
+.genMeter {
+  font-size: 12.5px;
+  color: var(--muted);
+  margin-top: 10px;
+}
+
+.progressWrap {
+  margin: 0 0 30px;
+}
+
+.progressBar {
+  height: 4px;
+  border-radius: 999px;
+  background: var(--line);
+  overflow: hidden;
+}
+
+.progressFill {
+  height: 100%;
+  border-radius: 999px;
+  background: var(--accent-ink);
+  transition: width 0.4s ease;
+}
+
+.upgradeLink {
+  color: var(--accent-ink);
+}
+
+/* ─── Error state ────────────────────────────────────────────────────── */
+
+.errorState {
+  padding: 56px 0;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 16px;
+}
+
+.hiccup {
+  font-size: 18px;
+  font-weight: 500;
+  color: var(--fg);
+  margin: 0;
+}
+
+.retryBtn {
+  border: none;
+  cursor: pointer;
+  font-weight: 600;
+  font-size: 14.5px;
+  border-radius: 999px;
+  padding: 12px 24px;
+  background: var(--fg);
+  color: #fff;
+  font-family: inherit;
+  transition: background 0.15s;
+}
+
+.retryBtn:hover:not(:disabled) {
+  background: #27272b;
+}
+
+.retryBtn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+/* ─── Upgrade modal ──────────────────────────────────────────────────── */
+
+.modalOverlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.4);
+  display: grid;
+  place-items: center;
+  z-index: 200;
+  backdrop-filter: blur(4px);
+}
+
+.modal {
+  background: var(--surface);
+  border-radius: 20px;
+  padding: 36px 32px;
+  max-width: 380px;
+  width: calc(100% - 48px);
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.2);
+}
+
+.modalTitle {
+  margin: 0 0 8px;
+  font-size: 22px;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+}
+
+.modalBody {
+  color: var(--muted);
+  font-size: 16px;
+  margin: 0 0 28px;
+  line-height: 1.5;
+}
+
+.modalActions {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+}
+
+.upgradeBtn {
+  display: inline-block;
+  border: none;
+  cursor: pointer;
+  font-weight: 600;
+  font-size: 14.5px;
+  border-radius: 999px;
+  padding: 12px 24px;
+  background: var(--fg);
+  color: #fff;
+  text-decoration: none;
+  transition: background 0.15s;
+  font-family: inherit;
+}
+
+.upgradeBtn:hover {
+  background: #27272b;
+}
+
+.cancelBtn {
+  border: 1px solid var(--line-strong);
+  background: transparent;
+  cursor: pointer;
+  font-weight: 500;
+  font-size: 14.5px;
+  border-radius: 999px;
+  padding: 12px 20px;
+  color: var(--muted);
+  font-family: inherit;
+  transition: border-color 0.15s, color 0.15s;
+}
+
+.cancelBtn:hover {
+  border-color: var(--fg);
+  color: var(--fg);
+}
+
+/* ─── Responsive ─────────────────────────────────────────────────────── */
+
+@media (max-width: 900px) {
+  .resultsGrid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 780px) {
+  .stepH {
+    font-size: 30px;
+  }
+}
+
+@media (max-width: 560px) {
+  .slidesShimmerGrid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}

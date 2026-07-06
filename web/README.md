@@ -1,21 +1,39 @@
 # Frontend
 
-Next.js (React) + TypeScript. Built from `mockup/index.html`, which is the
-approved visual + behavioral reference (a prototype with placeholder data — NOT
-the real frontend).
+The whole app — one Next.js (React) + TypeScript project. UI and API routes
+live side by side; there's no separate backend service.
+
+```
+app/            pages and UI
+app/api/        API routes — the backend. Owns AI provider calls, DB access, secrets.
+lib/            server-side helpers: AI generation, Supabase client, auth
+components/     shared UI components
+mockup/         index.html — approved visual + behavioral reference (prototype, not the app)
+```
+
+## Setup
+
+```
+npm install
+cp .env.example .env   # fill in real values — never commit .env
+npm run dev
+```
+
+See `.env.example` for the full list of required keys (Supabase, Gemini, Stripe,
+cron secret, etc.).
 
 ## Rules
-- **Never call an AI provider directly.** Only call our own `/api/...` endpoints
-  defined in `../docs/larp-ai-api-contract.md`.
-- **No API keys, ever.** Nothing secret in frontend code or the browser.
-- **No caption/sound/image logic** client-side — render what the job returns.
 
-## Build approach
-Develop fully against a **mock API layer** that returns the contract's shapes
-before the backend exists. Swap mocks for real `fetch` calls once endpoints are
-live, then test the full async flow (create job → poll → render → reroll).
+- **Frontend UI never calls an AI provider directly.** Only call our own
+  `/api/...` endpoints defined in `../docs/larp-ai-api-contract.md`.
+- **No API keys in UI code or shipped to the browser.** Secrets live in
+  `app/api/`'s server-side code and `.env` only.
+- **No caption/sound/image logic in the UI** — render what the job returns.
+- **Contract-first:** if an endpoint's shape needs to change, edit
+  `../docs/larp-ai-api-contract.md` first, then code both sides to match.
 
 ## Design
+
 Clean / minimal. Off-white `#FAFAF7`, near-black `#0B0B0C`, one champagne accent
 `#B8945F`. Inter for UI, Instrument Serif (italic) for the hero word only.
 Full reference: `mockup/index.html`.

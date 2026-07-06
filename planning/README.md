@@ -1,31 +1,20 @@
-# Backend
+# Planning
 
-Serverless API routes / functions. Holds all secrets and all AI orchestration.
+Session docs and database migrations for Larp AI. Nothing in here is runnable
+code — the app lives in `/web`. Read the root `CLAUDE.md` and
+`docs/larp-ai-api-contract.md` first; this folder is history and reference, not
+the source of truth.
 
-## Source of truth
-`../docs/larp-ai-api-contract.md`. Implement these exact endpoints, field names,
-and shapes. **If a change is needed, edit the contract doc first, then code.**
+## Files
 
-Endpoints to implement:
-- `POST /api/generations` → returns `jobId` immediately (async, does not wait)
-- `GET  /api/generations/{jobId}` → poll until `status: "complete"`
-- `POST /api/generations/{jobId}/assets/{assetId}/reroll` → re-generate one asset
-- `POST /api/uploads` → selfie upload (multipart), returns `uploadId`
-- `GET  /api/me` → plan + credits + rerolls for the nav indicator
-
-## Rules
-- **API keys live only in `.env`** (gitignored). Never in code, never committed,
-  never shipped to the browser. Add a `.env.example` with key names only.
-- **Generation is async:** create job → return `jobId` → client polls.
-- **Captions + sounds are generated here, inside the job**, informed by the
-  `sceneTag`s actually produced + the platform. The frontend has no such logic.
-- Owns model choice, credit cost, temporary selfie storage + deletion, safety.
-
-## Safety (see `../CLAUDE.md` — non-negotiable)
-Generate fake, never alter real. Selfie = user's own face, deleted after use.
-No real brand logos/trademarks. Prop money only. No fake financial documents.
-No earnings/income claims. When unsure, stop and flag.
-
-## AI providers (swappable, backend-only)
-Image model (stills), short-video model (clips), text model (captions). Pick on
-current cost/quality/ToS — re-check, they change fast.
+- **`backend-TODO.md`** — phased build plan for the API routes / backend work
+  (`web/app/api/`, `web/lib/`). Checked off as work completes.
+- **`backend-PROMPTS.md`** — the session-by-session prompts used to build the
+  backend, copy-pasted into Claude Code in order.
+- **`frontend-TODO.md`** — same idea, for the UI (`web/app/`,
+  `web/components/`).
+- **`frontend-PROMPTS.md`** — session prompts for the frontend work.
+- **`STATUS.md`** — running session log ("Session N completed..."). Gitignored —
+  local only, not shared history.
+- **`migrations/`** — SQL migration files, applied manually via the Supabase SQL
+  editor (or `supabase db push`). Numbered in application order.

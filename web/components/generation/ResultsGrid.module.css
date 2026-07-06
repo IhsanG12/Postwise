@@ -1,0 +1,122 @@
+/* ─── Grids ──────────────────────────────────────────────────────────── */
+
+.slidesGrid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 14px;
+}
+
+.videoGrid {
+  display: flex;
+  justify-content: flex-start;
+}
+
+/* ─── Tile ───────────────────────────────────────────────────────────── */
+
+.tile {
+  position: relative;
+  aspect-ratio: 4 / 5;
+  border-radius: 14px;
+  overflow: hidden;
+  border: 1px solid var(--line);
+  background: var(--surface);
+}
+
+.videoTile {
+  aspect-ratio: 9 / 16;
+  max-width: 260px;
+  width: 100%;
+}
+
+/* ─── Shimmer ────────────────────────────────────────────────────────── */
+
+@keyframes shimmer {
+  to { background-position: -200% 0; }
+}
+
+.shimmer {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(100deg, #f0efeb 30%, #f8f7f4 50%, #f0efeb 70%);
+  background-size: 200% 100%;
+  animation: shimmer 1.3s infinite;
+}
+
+/* ─── Asset tile contents ────────────────────────────────────────────── */
+
+.img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.num {
+  position: absolute;
+  top: 10px;
+  left: 10px;
+  z-index: 2;
+  font-size: 11px;
+  font-weight: 600;
+  color: #fff;
+  background: rgba(0, 0, 0, 0.34);
+  padding: 3px 8px;
+  border-radius: 999px;
+  backdrop-filter: blur(5px);
+}
+
+.playOverlay {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  z-index: 2;
+}
+
+/* ─── Hover actions ──────────────────────────────────────────────────── */
+
+.actions {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(180deg, transparent 40%, rgba(0, 0, 0, 0.5));
+  opacity: 0;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  gap: 8px;
+  padding: 12px;
+  transition: opacity 0.2s;
+  z-index: 3;
+}
+
+.tile:hover .actions,
+.tile:focus-within .actions {
+  opacity: 1;
+}
+
+.iconBtn {
+  border: none;
+  cursor: pointer;
+  background: rgba(255, 255, 255, 0.92);
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  transition: background 0.15s, transform 0.15s;
+  color: #0b0b0c;
+}
+
+.iconBtn:hover {
+  background: #fff;
+  transform: scale(1.08);
+}
+
+/* ─── Responsive ─────────────────────────────────────────────────────── */
+
+@media (max-width: 560px) {
+  .slidesGrid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}

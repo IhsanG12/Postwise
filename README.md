@@ -13,32 +13,33 @@ money or achieve real-world success. See the safety rules in `CLAUDE.md`.
 
 ```
 /                     repo root
-├─ CLAUDE.md          standing instructions — READ FIRST (both devs)
+├─ CLAUDE.md          standing instructions — READ FIRST
 ├─ docs/
 │  ├─ larp-ai-api-contract.md   the frontend↔backend agreement (SOURCE OF TRUTH)
 │  └─ larp-ai-handoff-brief.md  full project summary / context
-├─ frontend/          Next.js app (frontend dev)
-│  └─ mockup/index.html         visual + behavioral reference (prototype, not the app)
-└─ backend/           API + AI orchestration (backend dev)
+├─ web/               the whole app — one Next.js project
+│  ├─ app/                     pages and UI
+│  ├─ app/api/                 API routes (the backend)
+│  ├─ lib/                     server-side helpers, AI generation, DB client
+│  └─ mockup/index.html        visual + behavioral reference (prototype, not the app)
+└─ planning/          session docs, TODO lists, migrations — not code
 ```
 
 ## Where to start
 
-**Both of you, every session:** read `CLAUDE.md` and
-`docs/larp-ai-api-contract.md` first. The contract doc is the law — same field
-names, same shapes. **If a change is needed, edit the contract doc first, then code.**
+Read `CLAUDE.md` and `docs/larp-ai-api-contract.md` first, every session. The
+contract doc is the law — same field names, same shapes. **If a change is
+needed, edit the contract doc first, then code.**
 
-- **Frontend dev:** build in `/frontend` from the mockup. You can develop fully
-  against a mock API layer that returns the contract's shapes before the backend
-  exists, then swap mocks for real `fetch` calls.
-- **Backend dev:** build in `/backend` to the contract. Hold all secret keys in
-  `.env` (gitignored — never commit them). Generation is async: create job →
-  return `jobId` → client polls. Captions + sounds are generated server-side
-  inside the job.
+Build in `/web`. UI work lives in `app/` and `components/`; API routes and
+server-side logic live in `app/api/` and `lib/`. Copy `web/.env.example` to
+`web/.env` and fill in real values (never commit `.env`). Generation is
+async: create job → return `jobId` → client polls. Captions + sounds are
+generated server-side inside the job.
 
 ## Workflow
 
-- One shared private repo. **Pull before you start, commit small, push often.**
+- One shared repo. **Pull before you start, commit small, push often.**
 - The contract doc is the source of truth; code follows the doc.
 - When unsure whether something crosses a safety rule in `CLAUDE.md`, stop and
   flag it rather than guessing.

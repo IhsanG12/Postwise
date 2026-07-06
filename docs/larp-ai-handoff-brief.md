@@ -117,8 +117,9 @@ and out of fraud/deception territory. They're encoded in `CLAUDE.md` too.
   built in Next.js from it.
 
 ## 9. Team & workflow
-Two people: a frontend dev and a backend dev, both using Claude Code.
-- One shared **private** GitHub repo (monorepo): `/frontend`, `/backend`,
+One codebase, one Next.js project (`/web`) holding both the UI and the API
+routes — no separate backend service.
+- One shared **private** GitHub repo (monorepo): `/web`, `/planning`,
   `/docs`.
 - Both clone it; **pull before working, commit + push often.**
 - Each starts their Claude Code session by telling it to read `/CLAUDE.md` and

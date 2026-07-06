@@ -15,9 +15,12 @@ self-aware ("everyone's larping, we made it good"), never a promise of money,
 income, or real-world success.
 
 ## Repo structure
-- `/frontend` — Next.js (React) app. Owned by the frontend dev.
-- `/backend` — API + AI orchestration. Owned by the backend dev.
-- `/docs/larp-ai-api-contract.md` — the contract between them. Source of truth
+- `/web` — Next.js (React) app. Both frontend UI and backend API routes live here (Next.js architecture).
+  - `/web/app/` — pages and UI. **Frontend dev's territory.**
+  - `/web/app/api/` — API routes (the backend). **Backend dev's territory.**
+  - `/web/lib/` — server-side helpers, AI generation, DB client. **Backend dev's territory.**
+- `/planning` — session prompts, TODO, STATUS, and migration SQL. Not runnable code.
+- `/docs/larp-ai-api-contract.md` — the contract between frontend and backend. Source of truth
   for all request/response shapes. **Change this doc first, then code.**
 
 ## Stack

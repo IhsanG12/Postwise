@@ -1,0 +1,256 @@
+.pricingWrap {
+  padding: 64px 0 100px;
+}
+
+/* ─── Hero header ─────────────────────────────────────────────────────── */
+
+.heroSection {
+  text-align: center;
+  margin-bottom: 56px;
+}
+
+.title {
+  font-size: 48px;
+  font-weight: 700;
+  letter-spacing: -0.035em;
+  line-height: 1.1;
+  margin: 0 0 14px;
+  color: var(--fg);
+}
+
+.subtitle {
+  font-size: 18px;
+  color: var(--muted);
+  max-width: 42ch;
+  margin: 0 auto;
+  line-height: 1.5;
+}
+
+/* ─── Plan grid ───────────────────────────────────────────────────────── */
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 20px;
+  max-width: 960px;
+  margin: 0 auto;
+  align-items: start;
+}
+
+/* ─── Plan card ───────────────────────────────────────────────────────── */
+
+.card {
+  border: 1px solid var(--line);
+  border-radius: 20px;
+  padding: 32px 28px;
+  background: var(--surface);
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+.cardHighlight {
+  border-color: var(--accent);
+  box-shadow: 0 4px 28px rgba(184, 148, 95, 0.14);
+}
+
+/* ─── Badge ("Most popular") ──────────────────────────────────────────── */
+
+.badge {
+  display: inline-block;
+  width: fit-content;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--accent-ink);
+  background: #f3eee3;
+  border: 1px solid #ebe2cf;
+  padding: 3px 10px;
+  border-radius: 999px;
+  margin-bottom: 20px;
+}
+
+/* ─── Plan info ───────────────────────────────────────────────────────── */
+
+.planName {
+  font-size: 20px;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  margin: 0 0 10px;
+  color: var(--fg);
+}
+
+.price {
+  font-size: 44px;
+  font-weight: 700;
+  letter-spacing: -0.045em;
+  line-height: 1;
+  color: var(--fg);
+  margin-bottom: 4px;
+}
+
+.priceNote {
+  font-size: 14px;
+  color: var(--muted);
+  margin-bottom: 16px;
+}
+
+.credits {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--accent-ink);
+  background: #f9f6ef;
+  border: 1px solid #ebe2cf;
+  border-radius: 8px;
+  padding: 8px 12px;
+  margin-bottom: 28px;
+}
+
+/* ─── Feature list ────────────────────────────────────────────────────── */
+
+.features {
+  list-style: none;
+  padding: 0;
+  margin: 0 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 13px;
+  padding-bottom: 32px;
+}
+
+.feature {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  font-size: 14.5px;
+  color: var(--fg);
+  line-height: 1.4;
+}
+
+.checkIcon {
+  flex-shrink: 0;
+  margin-top: 2px;
+  color: var(--accent-ink);
+}
+
+/* ─── CTA area ────────────────────────────────────────────────────────── */
+
+.ctaSection {
+  margin-top: auto;
+}
+
+.ctaBtn {
+  display: block;
+  width: 100%;
+  padding: 14px 20px;
+  border-radius: 999px;
+  font-size: 15px;
+  font-weight: 600;
+  font-family: inherit;
+  cursor: pointer;
+  text-align: center;
+  text-decoration: none;
+  border: none;
+  transition: background 0.15s, transform 0.12s var(--ease, ease);
+}
+
+.ctaDark {
+  background: var(--fg);
+  color: #fff;
+}
+
+.ctaDark:hover:not(:disabled) {
+  background: #27272b;
+}
+
+.ctaDark:active:not(:disabled) {
+  transform: scale(0.97);
+}
+
+.ctaDark:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.ctaAccent {
+  background: #f3eee3;
+  color: var(--accent-ink);
+  border: 1px solid #ebe2cf;
+}
+
+.ctaAccent:hover:not(:disabled) {
+  background: #eee7d6;
+}
+
+.ctaAccent:active:not(:disabled) {
+  transform: scale(0.97);
+}
+
+.ctaAccent:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.ctaGhost {
+  background: transparent;
+  color: var(--muted);
+  border: 1px solid var(--line-strong);
+}
+
+.ctaGhost:hover {
+  background: #f4f3ee;
+  color: var(--fg);
+}
+
+.currentBadge {
+  width: 100%;
+  padding: 14px 20px;
+  border-radius: 999px;
+  font-size: 15px;
+  font-weight: 500;
+  text-align: center;
+  color: var(--faint);
+  border: 1px solid var(--line);
+  background: transparent;
+}
+
+/* ─── Fine print ──────────────────────────────────────────────────────── */
+
+.finePrint {
+  text-align: center;
+  font-size: 13.5px;
+  color: var(--faint);
+  margin-top: 36px;
+}
+
+/* ─── Responsive ──────────────────────────────────────────────────────── */
+
+@media (max-width: 860px) {
+  .grid {
+    grid-template-columns: 1fr;
+    max-width: 440px;
+  }
+
+  .title {
+    font-size: 38px;
+  }
+
+  .pricingWrap {
+    padding: 48px 0 80px;
+  }
+}
+
+@media (max-width: 480px) {
+  .title {
+    font-size: 32px;
+  }
+
+  .subtitle {
+    font-size: 16px;
+  }
+
+  .heroSection {
+    margin-bottom: 40px;
+  }
+}

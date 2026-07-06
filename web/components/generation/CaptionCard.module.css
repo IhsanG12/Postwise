@@ -1,0 +1,95 @@
+.card {
+  border: 1px solid var(--line);
+  background: var(--surface);
+  border-radius: 18px;
+  padding: 20px;
+  margin-bottom: 16px;
+}
+
+.title {
+  margin: 0 0 4px;
+  font-size: 15px;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.icon {
+  color: var(--accent-ink);
+  flex-shrink: 0;
+}
+
+.hint {
+  font-size: 12.5px;
+  color: var(--faint);
+  margin: 0 0 14px;
+}
+
+.cap {
+  padding: 12px 14px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  margin-bottom: 9px;
+  background: #fcfcfa;
+  cursor: pointer;
+  transition: border-color 0.15s, background 0.15s;
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.cap:hover {
+  border-color: var(--line-strong);
+  background: #fff;
+}
+
+.cap:last-child {
+  margin-bottom: 0;
+}
+
+.capBody {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  min-width: 0;
+}
+
+.text {
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.tone {
+  display: inline-block;
+  width: fit-content;
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--accent-ink);
+  background: #f3eee3;
+  border: 1px solid #ebe2cf;
+  padding: 2px 7px;
+  border-radius: 999px;
+}
+
+.copy {
+  font-size: 11px;
+  color: var(--faint);
+  font-weight: 600;
+  white-space: nowrap;
+  flex-shrink: 0;
+  padding-top: 2px;
+  transition: color 0.15s;
+}
+
+.cap:hover .copy {
+  color: var(--accent-ink);
+}
+
+.copyDone {
+  color: var(--accent-ink);
+}

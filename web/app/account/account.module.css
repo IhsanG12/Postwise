@@ -1,0 +1,95 @@
+.wrap {
+  max-width: 480px;
+  margin: 0 auto;
+  padding: 56px 0 100px;
+}
+
+.title {
+  font-size: 32px;
+  font-weight: 600;
+  letter-spacing: -0.03em;
+  margin: 0 0 28px;
+  text-align: center;
+}
+
+.card {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-lg);
+  padding: 8px 24px;
+  display: flex;
+  flex-direction: column;
+}
+
+.row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 18px 0;
+  border-bottom: 1px solid var(--line);
+}
+
+.row:last-child {
+  border-bottom: none;
+}
+
+.label {
+  font-size: 14.5px;
+  color: var(--muted);
+  font-weight: 500;
+}
+
+.value {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--fg);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.manageLink {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--accent-ink);
+  text-decoration: none;
+}
+
+.manageLink:hover {
+  text-decoration: underline;
+}
+
+.signOutBtn {
+  display: block;
+  width: 100%;
+  margin-top: 24px;
+  padding: 14px 24px;
+  border: 1px solid var(--line-strong);
+  background: var(--surface);
+  color: var(--fg);
+  border-radius: 999px;
+  font-size: 15px;
+  font-weight: 600;
+  font-family: inherit;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.signOutBtn:hover:not(:disabled) {
+  background: #f4f3ee;
+}
+
+.signOutBtn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+@media (max-width: 520px) {
+  .wrap {
+    padding: 40px 0 80px;
+  }
+
+  .title {
+    font-size: 26px;
+  }
+}

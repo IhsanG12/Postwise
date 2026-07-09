@@ -37,7 +37,6 @@ const PLANS: Plan[] = [
       'Basic scene library',
       '6 scenes per set',
       'Instagram + TikTok',
-      'Larp AI watermark',
     ],
     cta: null,
   },
@@ -53,7 +52,6 @@ const PLANS: Plan[] = [
     features: [
       'Full scene library',
       'Slideshow + video formats',
-      'No watermark',
       'Caption ideas + sound picks',
       '5 rerolls per month',
     ],
@@ -72,7 +70,6 @@ const PLANS: Plan[] = [
       'Video format (TikTok 9:16)',
       'Priority generation',
       'Unlimited rerolls',
-      'LinkedIn professional pack',
     ],
     cta: 'Go Pro',
   },

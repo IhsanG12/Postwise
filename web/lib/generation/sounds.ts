@@ -1,4 +1,7 @@
 import type { PlatformType } from "@/lib/types";
+import { callGeminiJSON } from "./gemini";
+
+const PROVIDER: "hardcoded" | "gemini" = "gemini";
 
 interface SoundSuggestion {
   title: string;
@@ -6,7 +9,7 @@ interface SoundSuggestion {
   openUrl: string;
 }
 
-const SOUNDS: Record<PlatformType, SoundSuggestion[]> = {
+const FALLBACK_SOUNDS: Record<PlatformType, SoundSuggestion[]> = {
   instagram: [
     {
       title: "luxury ambient (sped up)",
@@ -46,9 +49,31 @@ const SOUNDS: Record<PlatformType, SoundSuggestion[]> = {
 export async function saveSounds(
   jobId: string,
   platform: PlatformType,
+  sceneTags: string[],
   db: any
 ): Promise<void> {
-  const suggestions = SOUNDS[platform];
+  let suggestions: SoundSuggestion[] = FALLBACK_SOUNDS[platform];
+
+  if (PROVIDER === "gemini") {
+    try {
+      const sceneList = sceneTags.join(", ");
+      const platformNote = platform === "instagram" ? "Instagram Reels" : "TikTok";
+
+      const prompt = `You suggest trending-sound picks for a ${platformNote} post featuring: ${sceneList}.
+Generate exactly 3 plausible trending-sound suggestions that would fit this luxury-lifestyle content.
+Each needs:
+- "title": a short, real-sounding track/audio name (e.g. style, mood, or a known-sounding edit name).
+- "meta": a short trending stat in this platform's usual style (e.g. "trending · +250% this week" or "trending · 3.4M videos").
+- "openUrl": a plausible ${platformNote} audio-page URL for that title.
+Return ONLY a JSON array:
+[{"title":"...","meta":"...","openUrl":"..."}]`;
+
+      suggestions = await callGeminiJSON(prompt) as SoundSuggestion[];
+    } catch (err) {
+      console.error("[sounds] Gemini generation failed, falling back to hardcoded sounds", err);
+      suggestions = FALLBACK_SOUNDS[platform];
+    }
+  }
 
   const rows = suggestions.map((s) => ({
     job_id: jobId,

@@ -11,7 +11,8 @@ Work through these phases in order. Check off as you go.
 - [x] Set up `.env` file (never commit this)
 - [x] Add `.env` to `.gitignore`
 - [x] Sign up for Gemini API → get key → add to `.env`
-- [x] Sign up for Higgsfield API → get key → add to `.env`
+- [x] ~~Sign up for Higgsfield API → get key → add to `.env`~~ — never integrated; switched to Replicate instead (see Phase 3), key removed from `.env`
+- [x] Sign up for Replicate API → get key → add to `.env`
 - [x] Set up Stripe account → get test keys → add to `.env`
 
 ---
@@ -79,22 +80,24 @@ Work through these phases in order. Check off as you go.
 - [x] Save CDN URL + thumbUrl to DB
 - [x] Set `sceneTag` on each asset
 
-### Video Generation (Higgsfield)
+### Video Generation (Replicate — switched from Higgsfield, never integrated)
 
-- [ ] Write Higgsfield API wrapper
-- [ ] Handle longer processing time (video takes longer than images)
-- [ ] Store video URL on completion
+- [x] Write Replicate API wrapper (`lib/generation/video.ts`, polls prediction until succeeded/failed)
+- [x] Handle longer processing time (video takes longer than images)
+- [x] Store video URL on completion
+- [ ] Video reroll (currently `rerollable: false` — only image reroll is wired up)
+- [ ] Real per-clip timing observed, `estimatedSeconds` for video corrected from its current placeholder
 
 ### Caption Generation
 
 - [x] After images done, collect all `sceneTag`s from the job
 - [x] Call text model with: platform + sceneTags → generate captions with tone labels
-- [x] Store captions array in job record (hardcoded until Gemini billing enabled)
+- [x] Store captions array in job record (live via Gemini, hardcoded fallback only on API failure)
 
 ### Sound Suggestions
 
 - [x] Hardcode a curated list of trending sounds per platform to start
-- [ ] Later: make dynamic based on sceneTag
+- [x] Later: make dynamic based on sceneTag
 
 ### Background Job Runner
 
@@ -119,7 +122,7 @@ Work through these phases in order. Check off as you go.
 
 - [ ] Rate limiting on all endpoints
 - [ ] Error logging (use Sentry free tier)
-- [ ] Make sure selfie files are actually deleted after generation
+- [x] Make sure selfie files are actually deleted after generation
 - [ ] Deploy to Vercel (connect GitHub repo → auto deploys)
 - [ ] Add production env vars to Vercel dashboard
 - [ ] Test full flow end-to-end with Ihsan

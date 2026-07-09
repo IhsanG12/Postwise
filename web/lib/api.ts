@@ -18,24 +18,12 @@ export interface UploadResponse {
   expiresInSeconds: number;
 }
 
-export interface Style {
-  id: string;
-  name: string;
-  description: string;
-  previewEmoji: string;
-}
-
-export interface StylesResponse {
-  styles: Style[];
-}
-
 export interface CreateGenerationParams {
   platform: "instagram" | "tiktok";
   format: "slideshow" | "video";
   withFace: boolean;
   selfieUploadId: string | null;
   count: number;
-  styleId: string | null;
 }
 
 export interface CreateGenerationResponse {
@@ -49,7 +37,7 @@ export interface Asset {
   id: string;
   type: "image" | "video";
   url: string;
-  thumbUrl: string;
+  thumbUrl: string | null;
   width: number;
   height: number;
   sceneTag: string;
@@ -172,11 +160,6 @@ async function apiFetch<T>(
 export async function getMe(): Promise<MeResponse> {
   if (USE_MOCK) return mock.mockMe;
   return apiFetch<MeResponse>("/me");
-}
-
-// Public endpoint — no auth needed, safe to call before login.
-export async function getStyles(): Promise<StylesResponse> {
-  return apiFetch<StylesResponse>("/styles");
 }
 
 export async function uploadSelfie(file: File): Promise<UploadResponse> {

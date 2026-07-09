@@ -75,24 +75,22 @@ function AssetTile({
       ) : (
         <>
           <span className={styles.num}>{isVideo ? 'Clip' : index + 1}</span>
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img
-            src={asset.thumbUrl || asset.url}
-            alt={asset.sceneTag || `Scene ${index + 1}`}
-            className={styles.img}
-          />
-          {isVideo && (
-            <div className={styles.playOverlay}>
-              <svg
-                viewBox="0 0 24 24"
-                fill="#fff"
-                width={34}
-                height={34}
-                style={{ opacity: 0.92 }}
-              >
-                <path d="M8 5v14l11-7z" />
-              </svg>
-            </div>
+          {isVideo ? (
+            <video
+              src={asset.url}
+              poster={asset.thumbUrl || undefined}
+              className={styles.img}
+              controls
+              playsInline
+              preload="metadata"
+            />
+          ) : (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img
+              src={asset.thumbUrl || asset.url}
+              alt={asset.sceneTag || `Scene ${index + 1}`}
+              className={styles.img}
+            />
           )}
           <div className={styles.actions}>
             <button

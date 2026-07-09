@@ -23,7 +23,7 @@ Reference: web/mockup/index.html is the full visual + behavioral spec.
 - [x] Set up Supabase Auth (use same Supabase project as backend)
 - [x] Sign up page
 - [x] Log in page
-- [ ] Auth redirect logic (logged out → login, logged in → home)
+- [x] Auth redirect logic (logged out → login, logged in → home)
 - [x] Session handling so API calls include auth token
 
 ---
@@ -52,7 +52,7 @@ Reference: web/mockup/index.html is the full visual + behavioral spec.
 - [x] Show preview thumbnail after upload
 - [x] Store uploadId in state
 - [x] Privacy note: "Your photo is used only for this generation and deleted immediately after."
-- [ ] Error handling: wrong file type, too large (size/type validation on client before upload)
+- [x] Error handling: wrong file type, too large (size/type validation on client before upload)
 
 ---
 
@@ -93,7 +93,7 @@ Reference: web/mockup/index.html is the full visual + behavioral spec.
 - [ ] Mobile responsive (check mockup — it's already mobile-first)
 - [ ] Loading states on all buttons
 - [ ] Error states on all API calls
-- [ ] Empty states
+- [x] Empty states
 - [ ] Page transitions
 - [x] Favicon + meta tags (title: "Larp AI", description: "AI luxury content for Instagram & TikTok")
 - [x] Replace "Create Next App" title in layout.tsx with "Larp AI"
@@ -102,9 +102,9 @@ Reference: web/mockup/index.html is the full visual + behavioral spec.
 ---
 
 ## Phase 9 — Integration with real backend (Day 7)
-- [ ] Swap mock API layer for real fetch calls
-- [ ] Test full flow end-to-end with backend dev
-- [ ] Fix any field name mismatches (contract is source of truth)
+- [x] Swap mock API layer for real fetch calls
+- [x] Test full flow end-to-end with backend dev
+- [x] Fix any field name mismatches (contract is source of truth)
 - [ ] Test on mobile
 
 ---

@@ -36,7 +36,6 @@ export interface Job {
   with_face: boolean
   selfie_upload_id: string | null
   count: number
-  style_id: string | null
   error: string | null
   created_at: string
   completed_at: string | null

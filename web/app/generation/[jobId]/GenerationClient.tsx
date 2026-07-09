@@ -4,7 +4,7 @@ import { useCallback, useEffect, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useGeneration } from '@/lib/hooks/useGeneration';
-import { createGeneration, getStyles, ApiError } from '@/lib/api';
+import { createGeneration, ApiError } from '@/lib/api';
 import Spinner from '@/components/ui/Spinner';
 import styles from './generation.module.css';
 
@@ -50,22 +50,12 @@ export default function GenerationClient({
   const handleRetry = useCallback(async () => {
     setRetrying(true);
     try {
-      // This retry has no style-picker UI of its own — pick a random style
-      // so a slideshow retry still satisfies the backend's required styleId.
-      let styleId: string | null = null;
-      if (format === 'slideshow') {
-        const { styles: styleList } = await getStyles();
-        styleId = styleList.length > 0
-          ? styleList[Math.floor(Math.random() * styleList.length)].id
-          : null;
-      }
       const res = await createGeneration({
         platform,
         format,
         withFace,
         selfieUploadId: null,
         count: 6,
-        styleId,
       });
       router.push(
         `/generation/${res.jobId}?platform=${platform}&format=${format}&withFace=${withFace}`,

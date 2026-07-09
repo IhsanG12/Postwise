@@ -1,7 +1,6 @@
 import sharp from "sharp";
 import { supabase } from "@/lib/supabase";
 import { pickScenes, getDimensions, type Scene } from "./scenes";
-import { getStyleById, type StylePackage } from "./styles";
 import type { PlatformType, FormatType } from "@/lib/types";
 
 // TODO: swap PROVIDER back to "gemini" once Gemini billing is enabled.
@@ -40,15 +39,11 @@ export async function generateImages(
   withFace: boolean,
   selfieUploadId: string | null,
   count: number,
-  db: any,
-  styleId?: string | null
+  db: any
 ): Promise<GeneratedAsset[]> {
-  const scenes = pickScenes(count, withFace, [], styleId);
+  const scenes = pickScenes(count, withFace, []);
   const { width, height } = getDimensions(platform);
   const assets: GeneratedAsset[] = [];
-  // Same style anchor for every image in the job so the set reads as one
-  // consistent shoot rather than unrelated generations.
-  const style = styleId ? getStyleById(styleId) : undefined;
 
   // Download selfie once if needed (used by the Gemini path's inline image data).
   let selfieBase64: string | null = null;
@@ -88,7 +83,7 @@ export async function generateImages(
   let completed = 0;
   const results = await mapWithConcurrency(scenes, IMAGE_CONCURRENCY, async (scene): Promise<GeneratedAsset> => {
     const assetId = await generateSingleImage(
-      jobId, scene, width, height, withFace, selfieBase64, selfieMime, selfieUrl, db, style
+      jobId, scene, width, height, withFace, selfieBase64, selfieMime, selfieUrl, db
     );
     completed += 1;
     await db.from("jobs").update({ progress: completed / scenes.length }).eq("id", jobId);
@@ -108,16 +103,16 @@ async function generateAndUploadImage(
   selfieBase64: string | null,
   selfieMime: string,
   selfieUrl: string | null,
-  style?: StylePackage,
 ): Promise<{ url: string; thumbUrl: string }> {
   // This used to unconditionally say "No people, faceless" regardless of
   // withFace — directly contradicting the FACE_SCENES prompts that describe
   // a person, which is part of why face-mode shots were coming back empty.
   const peopleDirective = withFace
-    ? "Photorealistic portrait of the same person shown in the reference image — keep their face, identity, and features consistent with the reference."
+    ? "Photorealistic portrait of the same person shown in the reference image — keep their face, identity, and features consistent with the reference. " +
+      "Change their outfit to match the scene described above — do not copy the clothing from the reference photo verbatim; every scene is a different day/occasion with its own appropriate attire. " +
+      "Natural, anatomically correct body proportions and posture — no distorted limbs, no warped hands, no CGI/render look."
     : "No people, faceless luxury scene.";
-  const styleSuffix = style ? ` ${style.promptSuffix}` : "";
-  const fullPrompt = `${scene.prompt}. High quality, photorealistic, luxury lifestyle photography. ${peopleDirective} No brand logos, no trademarks, no real currency.${styleSuffix}`;
+  const fullPrompt = `${scene.prompt}. High quality, photorealistic, luxury lifestyle photography, shot on a real camera. ${peopleDirective} Natural skin texture and lighting, not 3D-rendered, not an AI-illustration look. No brand logos, no trademarks, no real currency.`;
 
   let imageBuffer: Buffer;
   const mimeType = "image/jpeg";
@@ -212,11 +207,10 @@ async function generateSingleImage(
   selfieBase64: string | null,
   selfieMime: string,
   selfieUrl: string | null,
-  db: any,
-  style?: StylePackage
+  db: any
 ): Promise<string> {
   const { url, thumbUrl } = await generateAndUploadImage(
-    jobId, scene, width, height, withFace, selfieBase64, selfieMime, selfieUrl, style
+    jobId, scene, width, height, withFace, selfieBase64, selfieMime, selfieUrl
   );
 
   const { data: asset, error: assetError } = await db
@@ -257,13 +251,11 @@ export async function rerollSingleImage(
 
   const { data: job } = await db
     .from("jobs")
-    .select("platform, format, with_face, selfie_upload_id, style_id")
+    .select("platform, format, with_face, selfie_upload_id")
     .eq("id", jobId)
-    .single() as { data: { platform: PlatformType; format: FormatType; with_face: boolean; selfie_upload_id: string | null; style_id: string | null } | null };
+    .single() as { data: { platform: PlatformType; format: FormatType; with_face: boolean; selfie_upload_id: string | null } | null };
 
   if (!job) throw new Error(`Job ${jobId} not found`);
-
-  const style = job.style_id ? getStyleById(job.style_id) : undefined;
 
   // Exclude scenes already present in this job so a reroll doesn't just
   // duplicate a tile that's already in the set.
@@ -273,7 +265,7 @@ export async function rerollSingleImage(
     .eq("job_id", jobId) as { data: { scene_tag: string }[] | null };
 
   const usedTags = (siblingAssets ?? []).map((a) => a.scene_tag);
-  const [newScene] = pickScenes(1, job.with_face, usedTags, job.style_id);
+  const [newScene] = pickScenes(1, job.with_face, usedTags);
 
   let selfieBase64: string | null = null;
   let selfieMime = "image/jpeg";
@@ -299,7 +291,7 @@ export async function rerollSingleImage(
   }
 
   const { url, thumbUrl } = await generateAndUploadImage(
-    jobId, newScene, existing.width, existing.height, job.with_face, selfieBase64, selfieMime, selfieUrl, style
+    jobId, newScene, existing.width, existing.height, job.with_face, selfieBase64, selfieMime, selfieUrl
   );
 
   // Update the existing row in place — keeps the same asset id so

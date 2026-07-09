@@ -12,18 +12,48 @@ export default function SignupPage() {
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const [confirmationSent, setConfirmationSent] = useState(false);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setError(null);
     setLoading(true);
-    const { error } = await getSupabaseBrowser().auth.signUp({ email, password });
+    const { data, error } = await getSupabaseBrowser().auth.signUp({ email, password });
     setLoading(false);
     if (error) {
       setError(error.message);
-    } else {
-      router.push("/");
+      return;
     }
+    // With "Confirm email" on, signUp() succeeds with no session yet — the
+    // account exists but isn't logged in until the confirmation link is
+    // clicked. Only redirect when we actually got a session; otherwise show
+    // a "check your inbox" state instead of silently pretending to be logged in.
+    if (data.session) {
+      router.push("/");
+    } else {
+      setConfirmationSent(true);
+    }
+  }
+
+  if (confirmationSent) {
+    return (
+      <div className={styles.page}>
+        <div className={styles.card}>
+          <div className={styles.brand}>
+            <span className={styles.dot} />
+            Larp AI
+          </div>
+          <h1 className={styles.title}>Check your inbox</h1>
+          <p className={styles.subtitle}>
+            We sent a confirmation link to <strong>{email}</strong>. Click it
+            to finish creating your account, then come back and sign in.
+          </p>
+          <p className={styles.footer}>
+            <Link href="/login">Back to sign in</Link>
+          </p>
+        </div>
+      </div>
+    );
   }
 
   return (

@@ -13,42 +13,10 @@ All requests/responses are JSON unless noted. Auth via session cookie or
 
 ## Core flow (generation is asynchronous)
 
-1. `GET  /api/styles` → user picks a style package for the slideshow.
-2. `POST /api/generations` → returns a `jobId` immediately (does NOT wait).
-3. `GET  /api/generations/{jobId}` → poll every ~2s until `status: "complete"`.
-4. Render `assets`, `captions`, `sounds` from the completed job.
-5. Per-image redo: `POST /api/generations/{jobId}/assets/{assetId}/reroll` → poll same job.
-
----
-
-## 0. List style packages
-
-`GET /api/styles`
-
-Public — no auth required, safe to call before login (used on the home picker).
-
-Response `200`:
-```json
-{
-  "styles": [
-    {
-      "id": "golden_mediterranean",
-      "name": "Golden Mediterranean",
-      "description": "Warm golden hour, coastal luxury",
-      "previewEmoji": "🌅"
-    }
-  ]
-}
-```
-
-Notes:
-- Only `id`, `name`, `description`, `previewEmoji` are ever returned. Each
-  style package also has a backend-only `promptSuffix` (plus `colorGrade`,
-  `mood`, `timeOfDay`, `cameraStyle`, `settingFamily`) that never leaves the
-  server — it's injected into every image prompt in the job so the whole
-  slideshow reads as one consistent shoot. Frontend has no style logic beyond
-  showing the picker and passing the chosen `id` along.
-- No DB — this is a static, hardcoded list (`lib/generation/styles.ts`).
+1. `POST /api/generations` → returns a `jobId` immediately (does NOT wait).
+2. `GET  /api/generations/{jobId}` → poll every ~2s until `status: "complete"`.
+3. Render `assets`, `captions`, `sounds` from the completed job.
+4. Per-image redo: `POST /api/generations/{jobId}/assets/{assetId}/reroll` → poll same job.
 
 ---
 
@@ -63,8 +31,7 @@ Request:
   "format": "slideshow",          // "slideshow" | "video"
   "withFace": true,               // false = faceless mode (skip selfie)
   "selfieUploadId": "upl_abc123", // required if withFace=true, else null
-  "count": 6,                     // images for slideshow; ignored for video
-  "styleId": "golden_mediterranean" // required for slideshow (see §0); ignored for video
+  "count": 6                      // images for slideshow; ignored for video
 }
 ```
 
@@ -82,11 +49,19 @@ Notes:
 - Selfie is uploaded separately first (see §4) so this request stays small JSON.
 - Backend decides credit cost by format (slideshow cheap, video premium).
 - If user lacks credits → `402` with `{ "error": "insufficient_credits" }`.
-- `styleId` must be one of the ids from `GET /api/styles`. Missing or unknown
-  `styleId` on a `slideshow` request → `400 invalid_request`. Ignored (not
-  validated, not required) when `format` is `"video"`.
-- Reroll (§3) reuses the job's original `styleId` automatically — a rerolled
-  asset stays visually consistent with the rest of the set.
+- Scenes for every image (slideshow or video) are drawn randomly from one
+  shared scene pool — by design, a single job can mix unrelated settings
+  (e.g. a watch macro, a supercar, a city skyline) rather than staying
+  visually consistent. There is no style/theme selection step.
+- `estimatedSeconds` differs by format: slideshow scales with `count`
+  (~50s/image observed against the current image provider); video uses a
+  flat placeholder (currently 90s) since real Replicate generation timings
+  haven't been observed in production yet — expect this to need the same
+  "watch real behavior, then correct" pass the slideshow estimate already got.
+- Video generation (backend: `lib/generation/video.ts`, via Replicate) takes
+  meaningfully longer per job than a single slideshow image — it's one
+  video-model prediction that's polled to completion, not a handful of
+  fast image calls in parallel.
 
 ---
 
@@ -138,6 +113,14 @@ Failure → `200` with `{ "status": "failed", "error": "generation_failed", "ret
 KEY POINT: `captions` and `sounds` are generated **inside this job**, informed by the
 `sceneTag`s of the assets actually produced + the platform. They change every
 generation. Frontend just renders these arrays — no client-side caption logic.
+
+For `format: "video"`, `assets` is always a single-element array: one
+`type: "video"` asset (a real generated clip, `url` pointing at an mp4 — not
+a still image). `thumbUrl` is `null` for video assets today (no frame
+extraction yet); the frontend renders a native `<video>` element rather than
+falling back to an `<img>` with `thumbUrl || url`, since the latter would try
+to render an mp4 URL as an image. `rerollable` is always `false` for video
+assets — reroll (§3) isn't implemented for video yet, only for images.
 
 ---
 

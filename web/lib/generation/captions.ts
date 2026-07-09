@@ -1,4 +1,5 @@
 import type { PlatformType } from "@/lib/types";
+import { callGeminiJSON } from "./gemini";
 
 const PROVIDER: "hardcoded" | "gemini" = "gemini";
 
@@ -8,10 +9,10 @@ interface Caption {
 }
 
 const FALLBACK_CAPTIONS: Caption[] = [
-  { text: "Just another Tuesday 🤍", tone: "understated" },
-  { text: "POV: the grind paid off", tone: "aspirational" },
-  { text: "larp unlocked 🔓", tone: "humorous" },
-  { text: "some doors you don't knock on. you just walk in.", tone: "mysterious" },
+  { text: "just a tuesday #larp 🤍", tone: "understated" },
+  { text: "grind arc, unlocked #mainCharacterEnergy", tone: "aspirational" },
+  { text: "larp unlocked 🔓 #delulu", tone: "humorous" },
+  { text: "some doors you don't knock on #ifItWasReal", tone: "mysterious" },
 ];
 
 export async function generateCaptions(
@@ -24,28 +25,22 @@ export async function generateCaptions(
 
   if (PROVIDER === "gemini") {
     try {
-      const { GoogleGenerativeAI } = await import("@google/generative-ai");
-      const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY!);
-      // "gemini-1.5-flash" was fully retired (confirmed via ListModels — it's
-      // not in the current catalog at all). Using the "-latest" alias instead
-      // of a pinned version this time, so Google's model rotation doesn't
-      // silently break this again the way it did here.
-      const model = genAI.getGenerativeModel({ model: "gemini-flash-lite-latest" });
-
       const sceneList = sceneTags.join(", ");
       const platformNote = platform === "instagram"
         ? "Instagram (polish, aesthetics, aspirational)"
         : "TikTok (punchy, trend-aware, Gen Z tone)";
 
       const prompt = `You are a social media copywriter for a luxury lifestyle brand.
-Generate exactly 4 short captions for a ${platformNote} post featuring: ${sceneList}.
-Rules: no earnings claims, no brand names, fun and self-aware.
+Generate exactly 4 captions for a ${platformNote} post featuring: ${sceneList}.
+Rules:
+- Each caption must be a SHORT PHRASE or fragment, never a full grammatical sentence.
+- Each caption must end with 1-2 inline hashtags that fit the vibe (e.g. #larp, #delulu, #mainCharacterEnergy, #ifItWasReal, #pluggedIn) — never a hashtag that implies real income, net worth, or earnings (do NOT use things like #money, #rich, #networth, #cashout).
+- Use trendy, slang-y, self-aware wording — this is a joke about "larping" a lifestyle, not a promise of real money or success.
+- No brand names.
 Return ONLY a JSON array:
 [{"text":"...","tone":"understated"},{"text":"...","tone":"aspirational"},{"text":"...","tone":"humorous"},{"text":"...","tone":"mysterious"}]`;
 
-      const result = await model.generateContent(prompt);
-      const raw = result.response.text().trim().replace(/^```json?\n?/, "").replace(/\n?```$/, "");
-      captions = JSON.parse(raw);
+      captions = await callGeminiJSON(prompt) as Caption[];
     } catch (err) {
       console.error("[captions] Gemini generation failed, falling back to hardcoded captions", err);
       captions = FALLBACK_CAPTIONS;

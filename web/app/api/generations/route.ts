@@ -2,16 +2,19 @@ import { NextRequest, NextResponse } from "next/server";
 import { getCurrentUser } from "@/lib/auth";
 import { supabase } from "@/lib/supabase";
 import { startGenerationJob } from "@/lib/generation/job";
-import { isValidStyleId } from "@/lib/generation/styles";
 import type { PlatformType, FormatType } from "@/lib/types";
 
 const PLATFORMS: PlatformType[] = ["instagram", "tiktok"];
 const FORMATS: FormatType[] = ["slideshow", "video"];
-// ~50s/image observed against the current image provider (frontend/lib/generation/images.ts).
+// ~50s/image observed against the current image provider (lib/generation/images.ts).
 // Estimate scales with count so it stays honest as the default slideshow size changes.
 const SECONDS_PER_IMAGE = 50;
+// Placeholder until real Replicate video-generation timings are observed —
+// this needs the same "watch real behavior, then correct" pass the slideshow
+// estimate already got (it started as a flat, wildly-optimistic 20s too).
+const VIDEO_ESTIMATE_SECONDS = 90;
 function estimateSeconds(format: FormatType, count: number): number {
-  return format === "video" ? SECONDS_PER_IMAGE : count * SECONDS_PER_IMAGE;
+  return format === "video" ? VIDEO_ESTIMATE_SECONDS : count * SECONDS_PER_IMAGE;
 }
 
 export async function GET(req: NextRequest) {
@@ -99,7 +102,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "invalid_request", message: "Expected JSON body." }, { status: 400 });
   }
 
-  const { platform, format, withFace, selfieUploadId, count, styleId } = body as Record<string, unknown>;
+  const { platform, format, withFace, selfieUploadId, count } = body as Record<string, unknown>;
 
   if (!PLATFORMS.includes(platform as PlatformType)) {
     return NextResponse.json({ error: "invalid_request", message: "platform must be 'instagram' or 'tiktok'." }, { status: 400 });
@@ -115,11 +118,6 @@ export async function POST(req: NextRequest) {
   }
   if (format === "slideshow" && (typeof count !== "number" || count < 1 || count > 10)) {
     return NextResponse.json({ error: "invalid_request", message: "count must be a number between 1 and 10." }, { status: 400 });
-  }
-  // styleId is required for slideshow (anchors every image to one visual style)
-  // and ignored for video — not validated, not stored.
-  if (format === "slideshow" && !isValidStyleId(styleId)) {
-    return NextResponse.json({ error: "invalid_request", message: "styleId must be a valid style from GET /api/styles." }, { status: 400 });
   }
 
   const db = supabase as any;
@@ -163,7 +161,6 @@ export async function POST(req: NextRequest) {
       with_face: withFace,
       selfie_upload_id: uploadUuid,
       count: format === "slideshow" ? count : 1,
-      style_id: format === "slideshow" ? styleId : null,
     })
     .select("id")
     .single() as { data: { id: string } | null; error: unknown };

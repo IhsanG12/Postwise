@@ -42,7 +42,7 @@ Do the following:
    - SUPABASE_URL
    - SUPABASE_SERVICE_KEY
    - GEMINI_API_KEY
-   - HIGGSFIELD_API_KEY
+   - REPLICATE_API_KEY
    - STRIPE_SECRET_KEY
    - STRIPE_WEBHOOK_SECRET
    - NEXTAUTH_SECRET
@@ -275,6 +275,42 @@ Prepare for launch. Go through each item:
 5. Error logging — console.error on all catch blocks with enough context to debug
 6. Deploy to Vercel — list all env vars I need to add in the Vercel dashboard
 7. Give me a curl test for each endpoint to run against the production URL
+
+---
+
+## SESSION 13 — Video Generation (Replicate)
+
+Read CLAUDE.md and docs/larp-ai-api-contract.md.
+
+Build video generation in /lib/generation/video.ts using Replicate (gives access
+to multiple video models under one API key — swap model IDs without rewriting code).
+
+1. Add REPLICATE_API_KEY to .env and .env.example.
+2. npm install replicate.
+3. generateVideo(jobId, { platform, withFace, selfieUploadId }, db):
+   - No style/theme system exists — pick a scene from the shared scene pool
+     (lib/generation/scenes.ts's pickScenes()), same as images use.
+   - Build a video prompt: cinematic luxury lifestyle clip, 5-8 seconds,
+     matching the picked scene's setting/mood. Faceless: no people, camera
+     moves through the environment. With face: composite the selfie in,
+     person moving naturally through the scene. No real brand logos/trademarks,
+     no real currency.
+   - Call Replicate (`predictions.create({ model, input })`), poll every 3s
+     until status is succeeded/failed, download the output, upload to Supabase
+     Storage bucket "generations", save an assets row (type: "video", real
+     scene_tag from the picked scene — not a fixed generic tag, since that
+     drives caption relevance — rerollable: false until video reroll exists).
+   - Update job progress while polling.
+4. In job.ts, branch: format === "video" → generateVideo(); else existing
+   generateImages() loop. Return the same {id, sceneTag}[] shape either way so
+   captions/sounds generation downstream doesn't need to know which ran.
+5. MODEL_CONFIG = { testing: "wavespeedai/wan-2.1-t2v-480p", launch: "kwaivgi/kling-v1-5-pro" } —
+   one-line swap when ready to move off the cheap testing model.
+6. Frontend: with no thumbUrl for video, render a real <video controls playsInline>
+   element instead of an <img> — the old fake-play-button-over-a-still-image
+   approach is the bug this whole feature exists to fix.
+7. Update the contract doc first: video's single-asset response shape,
+   rerollable always false for video, updated estimatedSeconds.
 
 ---
 

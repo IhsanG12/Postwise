@@ -1,5 +1,6 @@
 import { supabase } from "@/lib/supabase";
 import { generateImages, rerollSingleImage } from "./images";
+import { generateVideo } from "./video";
 import { generateCaptions } from "./captions";
 import { saveSounds } from "./sounds";
 import type { PlatformType, FormatType } from "@/lib/types";
@@ -10,7 +11,7 @@ export async function startGenerationJob(jobId: string): Promise<void> {
   try {
     const { data: job } = await db
       .from("jobs")
-      .select("platform, format, with_face, selfie_upload_id, count, style_id")
+      .select("platform, format, with_face, selfie_upload_id, count")
       .eq("id", jobId)
       .single() as {
         data: {
@@ -19,30 +20,32 @@ export async function startGenerationJob(jobId: string): Promise<void> {
           with_face: boolean;
           selfie_upload_id: string | null;
           count: number;
-          style_id: string | null;
         } | null;
       };
 
     if (!job) throw new Error(`Job ${jobId} not found`);
 
-    // Generate images and collect scene tags.
-    const assets = await generateImages(
-      jobId,
-      job.platform,
-      job.format,
-      job.with_face,
-      job.selfie_upload_id,
-      job.count,
-      db,
-      job.style_id
-    );
+    // Generate assets (video: one Replicate clip; slideshow: N images) and
+    // collect scene tags — same shape either way so captions/sounds below
+    // don't need to know which path ran.
+    const assets = job.format === "video"
+      ? await generateVideo(jobId, job.platform, job.with_face, job.selfie_upload_id, db)
+      : await generateImages(
+          jobId,
+          job.platform,
+          job.format,
+          job.with_face,
+          job.selfie_upload_id,
+          job.count,
+          db
+        );
 
     const sceneTags = assets.map((a) => a.sceneTag);
 
     // Generate captions and sounds in parallel.
     await Promise.all([
       generateCaptions(jobId, job.platform, sceneTags, db),
-      saveSounds(jobId, job.platform, db),
+      saveSounds(jobId, job.platform, sceneTags, db),
     ]);
 
     // Mark job complete.

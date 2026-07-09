@@ -1,12 +1,12 @@
 "use client";
 
-import { Suspense, useEffect, useState } from "react";
+import { Suspense, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Nav from "@/components/layout/Nav";
 import PageWrapper from "@/components/layout/PageWrapper";
 import SelfieUpload from "@/components/generation/SelfieUpload";
 import Link from "next/link";
-import { createGeneration, getStyles, ApiError, type Style } from "@/lib/api";
+import { createGeneration, ApiError } from "@/lib/api";
 import Spinner from "@/components/ui/Spinner";
 import styles from "./page.module.css";
 
@@ -221,33 +221,6 @@ function FormatCard({
   );
 }
 
-function StyleChip({
-  style,
-  selected,
-  onClick,
-}: {
-  style: Style;
-  selected: boolean;
-  onClick: () => void;
-}) {
-  return (
-    <div
-      className={[styles.styleChip, selected ? styles.styleChipSelected : ""]
-        .filter(Boolean)
-        .join(" ")}
-      onClick={onClick}
-      role="button"
-      tabIndex={0}
-      aria-pressed={selected}
-      onKeyDown={(e) => e.key === "Enter" && onClick()}
-    >
-      <span className={styles.styleEmoji}>{style.previewEmoji}</span>
-      <span className={styles.styleName}>{style.name}</span>
-      <span className={styles.styleDesc}>{style.description}</span>
-    </div>
-  );
-}
-
 function HomeContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -266,35 +239,23 @@ function HomeContent() {
   });
   const [withFace, setWithFace] = useState(() => searchParams.get("withFace") === "true");
   const [uploadId, setUploadId] = useState<string | null>(null);
-  const [styleList, setStyleList] = useState<Style[]>([]);
-  const [stylesError, setStylesError] = useState(false);
-  const [styleId, setStyleId] = useState<string | null>(null);
   const [generating, setGenerating] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [showUpgradeModal, setShowUpgradeModal] = useState(false);
 
-  useEffect(() => {
-    getStyles()
-      .then((res) => setStyleList(res.styles))
-      .catch(() => setStylesError(true));
-  }, []);
-
   const canGenerate =
     !!platform &&
     !!format &&
-    (format !== "slideshow" || !!styleId) &&
     (!withFace || !!uploadId) &&
     !generating;
 
   function handlePlatformSelect(p: Platform) {
     setPlatform(p);
     setFormat(null);
-    setStyleId(null);
   }
 
   function handleFormatSelect(f: Format) {
     setFormat(f);
-    if (f !== "slideshow") setStyleId(null);
   }
 
   function handleFaceModeChange(face: boolean) {
@@ -313,7 +274,6 @@ function HomeContent() {
         withFace,
         selfieUploadId: uploadId,
         count: 6,
-        styleId: format === "slideshow" ? styleId : null,
       });
       router.push(
         `/generation/${res.jobId}?platform=${platform}&format=${format}&withFace=${withFace}`,
@@ -421,40 +381,6 @@ function HomeContent() {
             </section>
           )}
 
-          {/* Style picker — slideshow only, anchors every image to one look */}
-          {platform && format === "slideshow" && (
-            <section className={styles.stepSection} key={`style-${format}`}>
-              <div className={styles.crumb}>
-                <span
-                  className={styles.chipPlat}
-                  style={{ background: PLATFORM_COLOR[platform] }}
-                >
-                  {PLATFORM_LABEL[platform]}
-                </span>
-                Step 2 of 3
-              </div>
-              <h2 className={styles.stepH}>Pick a look</h2>
-              <p className={styles.stepSub}>
-                Every photo in the set shares this style, so it reads like one shoot.
-              </p>
-
-              {stylesError ? (
-                <p className={styles.errorMsg}>Couldn&rsquo;t load styles — try refreshing.</p>
-              ) : (
-                <div className={styles.styleGrid}>
-                  {styleList.map((s) => (
-                    <StyleChip
-                      key={s.id}
-                      style={s}
-                      selected={styleId === s.id}
-                      onClick={() => setStyleId(s.id)}
-                    />
-                  ))}
-                </div>
-              )}
-            </section>
-          )}
-
           {/* Face mode + generate — appears after format selected */}
           {platform && format && (
             <section className={styles.stepSection} key={`face-${format}`}>
@@ -465,7 +391,7 @@ function HomeContent() {
                 >
                   {PLATFORM_LABEL[platform]}
                 </span>
-                {format === "slideshow" ? "Step 3 of 3" : "Step 2 of 2"}
+                Step 2 of 2
               </div>
               <h2 className={styles.stepH}>Make it you?</h2>
               <p className={styles.stepSub}>

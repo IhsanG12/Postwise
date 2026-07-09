@@ -1,7 +1,5 @@
 import type { PlatformType } from "@/lib/types";
-import { callGeminiJSON } from "./gemini";
-
-const PROVIDER: "hardcoded" | "gemini" = "gemini";
+import { sceneGroup } from "./scenes";
 
 interface SoundSuggestion {
   title: string;
@@ -9,42 +7,101 @@ interface SoundSuggestion {
   openUrl: string;
 }
 
-const FALLBACK_SOUNDS: Record<PlatformType, SoundSuggestion[]> = {
-  instagram: [
-    {
-      title: "luxury ambient (sped up)",
-      meta: "trending · +340% this week",
-      openUrl: "https://www.instagram.com/reels/audio/luxury-ambient",
-    },
-    {
-      title: "silent night (lo-fi remix)",
-      meta: "trending · 2.1M reels",
-      openUrl: "https://www.instagram.com/reels/audio/silent-night-lofi",
-    },
-    {
-      title: "cinematic rise",
-      meta: "trending · +180% this week",
-      openUrl: "https://www.instagram.com/reels/audio/cinematic-rise",
-    },
-  ],
+type Vibe = "vacation" | "party" | "moody" | "cinematic" | "nostalgic" | "confident" | "dreamy";
+
+interface RealSong {
+  title: string;
+  artist: string;
+  vibe: Vibe;
+}
+
+// Real, currently-circulating songs (per TikTok/Instagram trend roundups as of
+// July 2026) — every title/artist here is a real, searchable track. No
+// invented names, no fabricated "trending" stats, no guessed-at audio-page URLs.
+const REAL_SONGS: Record<PlatformType, RealSong[]> = {
   tiktok: [
-    {
-      title: "rich girl era (slowed)",
-      meta: "trending · 4.7M videos",
-      openUrl: "https://www.tiktok.com/music/rich-girl-era",
-    },
-    {
-      title: "levitating (luxury edit)",
-      meta: "trending · +290% this week",
-      openUrl: "https://www.tiktok.com/music/levitating-luxury",
-    },
-    {
-      title: "aesthetic morning routine",
-      meta: "trending · 8.2M videos",
-      openUrl: "https://www.tiktok.com/music/aesthetic-morning",
-    },
+    { title: "Material Lover", artist: "Sienna Spiro", vibe: "confident" },
+    { title: "No One Noticed", artist: "The Marías", vibe: "dreamy" },
+    { title: "REDRED", artist: "CORTIS", vibe: "party" },
+    { title: "Dai Dai", artist: "Shakira & Burna Boy", vibe: "vacation" },
+    { title: "How You Like Me Now", artist: "The Heavy", vibe: "confident" },
+    { title: "Melisa I'm Drunk And Outside", artist: "Afroplugs", vibe: "party" },
+    { title: "Moment Of Reflection", artist: "jhonatan, Piano Sky & Dee Piano", vibe: "cinematic" },
+    { title: "The Fifth of May", artist: "Zach Bryan", vibe: "nostalgic" },
+    { title: "PRESSURE!", artist: "Nyck Caution", vibe: "confident" },
+    { title: "i just get so nervy (super slowed)", artist: "HYFY", vibe: "moody" },
+    { title: "Espresso", artist: "Sabrina Carpenter", vibe: "confident" },
+    { title: "Golden Brown (Slowed Down Version)", artist: "The Stranglers", vibe: "nostalgic" },
+  ],
+  instagram: [
+    { title: "summer on the inside", artist: "Warner Case, Jean Tonique & Max Kaluz", vibe: "vacation" },
+    { title: "Espresso", artist: "Sabrina Carpenter", vibe: "confident" },
+    { title: "Golden Brown (Slowed Down Version)", artist: "The Stranglers", vibe: "nostalgic" },
+    { title: "Young Hearts Run Free (45 Version)", artist: "Candi Staton", vibe: "nostalgic" },
+    { title: "Careless Whisper (slowed)", artist: "George Michael", vibe: "moody" },
+    { title: "Sunny", artist: "Boney M. & R3HAB", vibe: "vacation" },
+    { title: "Game Time", artist: "Future & Tyla", vibe: "party" },
+    { title: "Ray Mysterio", artist: "The Alchemist", vibe: "cinematic" },
+    { title: "I Knew It, I Knew You", artist: "Taylor Swift", vibe: "dreamy" },
+    { title: "Respect", artist: "Aretha Franklin", vibe: "confident" },
+    { title: "Bed on Fire", artist: "G Flip", vibe: "party" },
+    { title: "No One Noticed", artist: "The Marías", vibe: "dreamy" },
+    { title: "Material Lover", artist: "Sienna Spiro", vibe: "confident" },
   ],
 };
+
+// Maps each leftover story-group prefix (see scenes.ts) to the song vibe that
+// fits it, so the suggested sound matches the job's actual setting instead of
+// being picked at random.
+const GROUP_VIBE: Record<string, Vibe> = {
+  gm: "vacation",   // golden-hour Mediterranean yacht/villa
+  mm: "party",      // Monte Carlo casino nightlife
+  am: "moody",      // alpine minimalist snow
+  dn: "moody",      // desert dusk
+  rp: "vacation",   // riviera pastel beach resort
+  mb: "moody",      // monochrome black editorial
+  te: "vacation",   // tropical jungle escape
+  pd: "cinematic",  // penthouse twilight
+  ap: "cinematic",  // bright arctic winter
+  vg: "nostalgic",  // vintage grandeur estate
+  nt: "party",      // neon night city
+  sy: "vacation",   // sunny midday yacht
+};
+
+function openUrlFor(platform: PlatformType, title: string, artist: string): string {
+  const query = encodeURIComponent(`${title} ${artist}`);
+  // TikTok's own search is real and functional. Instagram doesn't expose a
+  // reliable unauthenticated search endpoint to link to, so point to Spotify
+  // search instead — a real, working link to the actual song, rather than a
+  // guessed-at Instagram URL that just 200s on the app shell without
+  // actually resolving to anything (the exact kind of fake link this
+  // replaces).
+  return platform === "tiktok"
+    ? `https://www.tiktok.com/search?q=${query}`
+    : `https://open.spotify.com/search/${query}`;
+}
+
+function pickSounds(platform: PlatformType, sceneTags: string[], count: number): SoundSuggestion[] {
+  const pool = REAL_SONGS[platform];
+  const group = sceneTags.map(sceneGroup).find((g) => g !== null) ?? null;
+  const vibe = group ? GROUP_VIBE[group] : null;
+
+  const matched = vibe ? pool.filter((s) => s.vibe === vibe) : [];
+  const rest = pool.filter((s) => !matched.includes(s));
+
+  // Prioritize songs matching the job's vibe, then top up with the rest of
+  // the real pool — some vibes only have 1-2 curated songs, so a strict
+  // vibe-only filter would under-fill instead of just being less targeted.
+  const shuffled = [
+    ...matched.sort(() => Math.random() - 0.5),
+    ...rest.sort(() => Math.random() - 0.5),
+  ];
+  return shuffled.slice(0, count).map((song) => ({
+    title: `${song.title} — ${song.artist}`,
+    meta: song.vibe,
+    openUrl: openUrlFor(platform, song.title, song.artist),
+  }));
+}
 
 export async function saveSounds(
   jobId: string,
@@ -52,28 +109,7 @@ export async function saveSounds(
   sceneTags: string[],
   db: any
 ): Promise<void> {
-  let suggestions: SoundSuggestion[] = FALLBACK_SOUNDS[platform];
-
-  if (PROVIDER === "gemini") {
-    try {
-      const sceneList = sceneTags.join(", ");
-      const platformNote = platform === "instagram" ? "Instagram Reels" : "TikTok";
-
-      const prompt = `You suggest trending-sound picks for a ${platformNote} post featuring: ${sceneList}.
-Generate exactly 3 plausible trending-sound suggestions that would fit this luxury-lifestyle content.
-Each needs:
-- "title": a short, real-sounding track/audio name (e.g. style, mood, or a known-sounding edit name).
-- "meta": a short trending stat in this platform's usual style (e.g. "trending · +250% this week" or "trending · 3.4M videos").
-- "openUrl": a plausible ${platformNote} audio-page URL for that title.
-Return ONLY a JSON array:
-[{"title":"...","meta":"...","openUrl":"..."}]`;
-
-      suggestions = await callGeminiJSON(prompt) as SoundSuggestion[];
-    } catch (err) {
-      console.error("[sounds] Gemini generation failed, falling back to hardcoded sounds", err);
-      suggestions = FALLBACK_SOUNDS[platform];
-    }
-  }
+  const suggestions = pickSounds(platform, sceneTags, 3);
 
   const rows = suggestions.map((s) => ({
     job_id: jobId,

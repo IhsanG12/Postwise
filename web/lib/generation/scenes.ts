@@ -948,17 +948,40 @@ const FACE_SCENES: Scene[] = [
   },
 ];
 
+// Tags still carry their prefix from the old 12-style system (gm_, mm_, am_,
+// dn_, rp_, mb_, te_, pd_, ap_, vg_, nt_, sy_) even though style selection is
+// gone. Reusing those prefixes as an internal "story group" so one job's
+// scenes read as one setting/trip instead of a random assortment of climates
+// (jet lounge next to a desert dune next to a ski chalet) — the grouping is
+// automatic, never exposed as a user-facing choice.
+const STORY_GROUPS = ["gm", "mm", "am", "dn", "rp", "mb", "te", "pd", "ap", "vg", "nt", "sy"];
+
+export function sceneGroup(tag: string): string | null {
+  const prefix = tag.split("_")[0];
+  return STORY_GROUPS.includes(prefix) ? prefix : null;
+}
+
 export function pickScenes(
   count: number,
   withFace: boolean,
-  excludeTags: string[] = []
+  excludeTags: string[] = [],
+  group?: string
 ): Scene[] {
   const pool = withFace ? FACE_SCENES : FACELESS_SCENES;
 
-  const unused = pool.filter((s) => !excludeTags.includes(s.tag));
-  // Prefer scenes not already in play; fall back to the full pool once every
-  // scene has been used (e.g. count exceeds pool size).
-  const candidates = unused.length > 0 ? unused : pool;
+  // Pick one story group for this job (or reuse the one passed in, for a
+  // reroll that needs to stay consistent with its siblings) instead of
+  // drawing from the whole pool.
+  const availableGroups = STORY_GROUPS.filter((g) => pool.some((s) => sceneGroup(s.tag) === g));
+  const chosenGroup = group && availableGroups.includes(group)
+    ? group
+    : availableGroups[Math.floor(Math.random() * availableGroups.length)];
+
+  const groupPool = pool.filter((s) => sceneGroup(s.tag) === chosenGroup);
+  const unused = groupPool.filter((s) => !excludeTags.includes(s.tag));
+  // Prefer scenes not already in play; fall back to the full group once every
+  // scene in it has been used (e.g. count exceeds group size).
+  const candidates = unused.length > 0 ? unused : groupPool;
   const shuffled = [...candidates].sort(() => Math.random() - 0.5);
   const result: Scene[] = [];
   for (let i = 0; i < count; i++) {

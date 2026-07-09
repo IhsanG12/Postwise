@@ -1,6 +1,6 @@
 import sharp from "sharp";
 import { supabase } from "@/lib/supabase";
-import { pickScenes, getDimensions, type Scene } from "./scenes";
+import { pickScenes, getDimensions, sceneGroup, type Scene } from "./scenes";
 import type { PlatformType, FormatType } from "@/lib/types";
 
 // TODO: swap PROVIDER back to "gemini" once Gemini billing is enabled.
@@ -265,7 +265,11 @@ export async function rerollSingleImage(
     .eq("job_id", jobId) as { data: { scene_tag: string }[] | null };
 
   const usedTags = (siblingAssets ?? []).map((a) => a.scene_tag);
-  const [newScene] = pickScenes(1, job.with_face, usedTags);
+  // Stay within the same story group as the rest of the job's assets — a
+  // reroll shouldn't jump the whole set from, say, a yacht trip to a ski
+  // chalet just because that one tile got redrawn.
+  const existingGroup = usedTags.map(sceneGroup).find((g) => g !== null) ?? undefined;
+  const [newScene] = pickScenes(1, job.with_face, usedTags, existingGroup);
 
   let selfieBase64: string | null = null;
   let selfieMime = "image/jpeg";

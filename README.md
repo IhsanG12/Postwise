@@ -14,13 +14,13 @@ Built with Next.js 16 (React 19, TypeScript), Supabase (Postgres, auth, storage)
 
 ## Who built what
 
-Postwise started this summer as **Larp AI**, a side project with my friend Kaya ([KayaTuncel](https://github.com/KayaTuncel)) that generated random "luxury lifestyle" photos for social media. The git history shows the split.
+Postwise grew out of a side project I built this summer with my friend Kaya ([KayaTuncel](https://github.com/KayaTuncel)): an app that generated AI lifestyle photos for social media. The git history shows the split.
 
-**v1, Larp AI (June–July 2026)**
+**v1, the first version (June–July 2026)**
 - **Me:** the product brief, the API contract between frontend and backend (`docs/api-contract.md`), the HTML mockup (`web/mockup/`), and the safety rules in `CLAUDE.md`.
 - **Kaya:** the app itself, built with Claude Code from those documents. That covers the pages, API routes, auth, Stripe billing, and the first generation pipeline.
 
-**v2, Postwise (October 2026)**
+**v2, Postwise (fall 2026)**
 - **Me:** I pivoted the product from novelty luxury content to a real tool for creators, and rebuilt the generation pipeline around it. I used Claude Code throughout. What changed:
   - a brief-driven **post planner** (`web/lib/generation/plan.ts`) replaced a 1,000-line catalog of hardcoded luxury scenes
   - slide text, with a text-on-image download

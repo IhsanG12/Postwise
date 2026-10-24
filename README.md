@@ -16,19 +16,16 @@ Built with Next.js 16 (React 19, TypeScript), Supabase (Postgres, auth, storage)
 
 Postwise grew out of a side project I built this summer with my friend Kaya ([KayaTuncel](https://github.com/KayaTuncel)): an app that generated AI lifestyle photos for social media. The git history shows the split.
 
-**v1, the first version (June–July 2026)**
+**Summer 2026: the first version**
 - **Me:** the product brief, the API contract between frontend and backend (`docs/api-contract.md`), the HTML mockup (`web/mockup/`), and the safety rules in `CLAUDE.md`.
 - **Kaya:** the app itself, built with Claude Code from those documents. That covers the pages, API routes, auth, Stripe billing, and the first generation pipeline.
 
-**v2, Postwise (fall 2026)**
-- **Me:** I pivoted the product from novelty luxury content to a real tool for creators, and rebuilt the generation pipeline around it. I used Claude Code throughout. What changed:
-  - a brief-driven **post planner** (`web/lib/generation/plan.ts`) replaced a 1,000-line catalog of hardcoded luxury scenes
-  - slide text, with a text-on-image download
-  - hashtags
-  - reroll now redraws the same slide instead of picking a random new scene
-  - a clear refusal path when a brief breaks the rules
-  - a fix so background jobs aren't killed on serverless hosts
-  - unit tests, and cleaned-up types and lint (27 problems down to 0)
+**Recent update**
+I recently used Claude Code to rework it into Postwise and get it deployable again. The main changes:
+- a post planner (`web/lib/generation/plan.ts`) that builds each post from the creator's one-line brief, in place of the old hardcoded scene catalog
+- slide text, hashtags, and redraws that keep the same slide
+- a clear message to the creator when a brief breaks the rules
+- fixes for deploying on Vercel's free plan, plus unit tests and cleanup
 
 `docs/v1-product-brief.md` is the original brief, kept for history.
 
@@ -52,7 +49,7 @@ GET /api/generations/:id ◄─ every 2s: progress … then the            3. ca
 
 ### 1. The planner (`web/lib/generation/plan.ts`)
 
-This is the heart of v2. One text-model call turns the brief into a plan for the whole post:
+This is the core of the app. One text-model call turns the brief into a plan for the whole post:
 
 ```ts
 interface PostPlan {

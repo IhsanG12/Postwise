@@ -1,5 +1,6 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextRequest, NextResponse, after } from "next/server";
 import { getCurrentUser } from "@/lib/auth";
+import { deleteExpiredUploads } from "@/lib/cleanup";
 import { supabase, db } from "@/lib/supabase";
 
 const ALLOWED_TYPES = ["image/jpeg", "image/png", "image/webp"];
@@ -62,6 +63,10 @@ export async function POST(req: NextRequest) {
     await supabase.storage.from("selfies").remove([storagePath]);
     return NextResponse.json({ error: "server_error" }, { status: 500 });
   }
+
+  // Sweep any selfies past their 10-minute expiry on every upload, so the
+  // safety rule holds even on hosting plans whose cron only runs daily.
+  after(() => deleteExpiredUploads());
 
   return NextResponse.json(
     { uploadId: `upl_${data.id}`, expiresInSeconds: EXPIRES_IN_SECONDS },

@@ -112,7 +112,7 @@ The rules are in `CLAUDE.md`. Here is where each one lives in the code:
 
 | Rule | Enforced in |
 |---|---|
-| Selfies are the creator's own face, used once, then deleted | `api/uploads` stores them in the `selfies` bucket with a 10-minute expiry; `images.ts` only signs 5-minute URLs; the `cron/cleanup-uploads` route (every 10 min, `vercel.json`) deletes expired ones |
+| Selfies are the creator's own face, used once, then deleted | `api/uploads` stores them in the `selfies` bucket with a 10-minute expiry; `images.ts` only signs 5-minute URLs; expired ones are swept after every upload and every new post (`lib/cleanup.ts`), with a daily cron (`vercel.json`) as a backstop |
 | No other real people, no impersonation | the planner's refusal rule, which produces a `brief_rejected` failure the creator can read |
 | No brand logos or trademarks | planner rules + the image style suffix (`style.ts`) |
 | No fake receipts, balances or earnings screenshots | the planner's refusal rule |
@@ -147,6 +147,7 @@ These are the things I'd fix next.
 - **Credit check and charge aren't atomic.** The route reads the balance, then writes `balance - 1`, so two requests at the same instant could both pass. The fix is a single conditional update (`… set credits = credits - 1 where credits > 0 returning credits`) as a Postgres function.
 - **Refusals depend on the model.** There's no second, independent check of the brief or of the generated images, and a determined brief could still talk its way past the planner.
 - **The sound list goes stale.** It's real songs as of July 2026, picked by hand.
+- **Expired selfies are swept when the app is used, plus once a day.** On a quiet day a selfie can outlive its 10-minute expiry until the next request or the daily cron (the free Vercel plan's minimum interval). A paid plan or a Postgres scheduled job would close that gap.
 - **Long jobs live inside one function call.** That's fine at six slides within `maxDuration`. Video and bigger posts should move to a real queue.
 - **Video can't be redrawn yet**, and video has no slide text.
 - **`types.ts` doesn't model every column**, so queries go through one untyped client (`db` in `lib/supabase.ts`) and type their results at each call site. Generating the types from the schema would remove that.
@@ -165,3 +166,9 @@ npm run lint
 ```
 
 Database: run `planning/migrations/001…005` in order in the Supabase SQL editor. To click through the UI without any keys, set `USE_MOCK = true` in `web/lib/api.ts`.
+
+### Deploying on Vercel
+
+1. Import the repo on vercel.com and set **Root Directory** to `web`.
+2. Add the environment variables from `web/.env.example`. Supabase, Gemini and Pollinations are enough for slideshows. Replicate is only for video, and Stripe only for paid plans; without Stripe, billing routes answer `503 billing_unavailable` and everything else works.
+3. In Supabase → Authentication → URL Configuration, set the Site URL to your Vercel URL so sign-up emails link back to it.

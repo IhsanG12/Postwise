@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse, after } from "next/server";
 import { getCurrentUser } from "@/lib/auth";
+import { deleteExpiredUploads } from "@/lib/cleanup";
 import { db } from "@/lib/supabase";
 import { startGenerationJob } from "@/lib/generation/job";
 import { validateBrief, cleanBrief } from "@/lib/brief";
@@ -186,6 +187,9 @@ export async function POST(req: NextRequest) {
   // sent; `after` keeps the function alive until the job settles.
   // startGenerationJob catches its own errors and refunds the credit.
   after(() => startGenerationJob(job.id));
+  // Also sweep expired selfies (see api/uploads) — cheap, and keeps the
+  // 10-minute TTL honest between the daily cron runs.
+  after(() => deleteExpiredUploads());
 
   return NextResponse.json(
     {

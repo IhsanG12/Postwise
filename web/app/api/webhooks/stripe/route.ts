@@ -1,8 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
-import Stripe from "stripe";
+import type Stripe from "stripe";
+import { getStripe, BILLING_UNAVAILABLE } from "@/lib/stripe";
 import { db } from "@/lib/supabase";
-
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!);
 
 // Credits granted per plan on subscription start.
 const PLAN_CREDITS: Record<string, number> = {
@@ -15,6 +14,11 @@ const PLAN_CREDITS: Record<string, number> = {
 const LEGACY_PLAN_NAMES: Record<string, string> = { larper: "creator" };
 
 export async function POST(req: NextRequest) {
+  const stripe = getStripe();
+  if (!stripe) {
+    return NextResponse.json(BILLING_UNAVAILABLE, { status: 503 });
+  }
+
   const signature = req.headers.get("stripe-signature");
   if (!signature) {
     return NextResponse.json({ error: "missing_signature" }, { status: 400 });

@@ -1,7 +1,8 @@
 import { supabase, db } from "./supabase";
 
-// Deletes selfie uploads that have passed their expiry time.
-// Call this on a schedule (e.g. every 5 minutes via a cron route).
+// Deletes selfie uploads that have passed their expiry time (10 minutes).
+// Runs after every upload and every new generation, plus once a day from the
+// cron route as a backstop (Vercel's free plan only allows daily crons).
 // Selfies must not outlive their TTL — see safety rule #6 in CLAUDE.md.
 export async function deleteExpiredUploads(): Promise<{ deleted: number; errors: number }> {
   const { data: expired, error: fetchError } = await db

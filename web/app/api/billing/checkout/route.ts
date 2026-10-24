@@ -1,9 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
-import Stripe from "stripe";
+import { getStripe, BILLING_UNAVAILABLE } from "@/lib/stripe";
 import { getCurrentUser } from "@/lib/auth";
 import { db } from "@/lib/supabase";
-
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!);
 
 // Price IDs from your Stripe dashboard (Products → Prices).
 // Add these to .env after creating the products in Stripe.
@@ -15,6 +13,11 @@ const PRICE_IDS: Record<string, string | undefined> = {
 };
 
 export async function POST(req: NextRequest) {
+  const stripe = getStripe();
+  if (!stripe) {
+    return NextResponse.json(BILLING_UNAVAILABLE, { status: 503 });
+  }
+
   const user = await getCurrentUser(req);
   if (!user) {
     return NextResponse.json({ error: "unauthorized" }, { status: 401 });

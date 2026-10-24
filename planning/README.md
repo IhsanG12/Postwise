@@ -1,9 +1,11 @@
 # Planning
 
-Session docs and database migrations for Larp AI. Nothing in here is runnable
-code — the app lives in `/web`. Read the root `CLAUDE.md` and
-`docs/larp-ai-api-contract.md` first; this folder is history and reference, not
-the source of truth.
+Session docs and database migrations. Nothing in here is runnable code — the
+app lives in `/web`. Read the root `CLAUDE.md` and `docs/api-contract.md`
+first; this folder is history and reference, not the source of truth.
+
+The TODO and PROMPTS files are the build log of v1 (Larp AI, summer 2026).
+Migration `005_postwise_briefs.sql` is the v2 (Postwise) pivot.
 
 ## Files
 

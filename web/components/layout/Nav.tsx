@@ -29,7 +29,7 @@ export default function Nav() {
       <div className={styles.inner}>
         <Link href="/" className={styles.brand}>
           <span className={styles.dot} />
-          Larp AI
+          Postwise
         </Link>
         <div className={styles.right}>
           {creditsLabel !== null && (

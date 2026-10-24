@@ -7,6 +7,7 @@ import PageWrapper from "@/components/layout/PageWrapper";
 import SelfieUpload from "@/components/generation/SelfieUpload";
 import Link from "next/link";
 import { createGeneration, ApiError } from "@/lib/api";
+import { BRIEF_EXAMPLES, BRIEF_MAX_LENGTH, BRIEF_MIN_LENGTH, cleanBrief } from "@/lib/brief";
 import Spinner from "@/components/ui/Spinner";
 import styles from "./page.module.css";
 
@@ -32,9 +33,9 @@ const PLATFORM_GRADIENT: Record<Platform, string> = {
 
 const PLATFORM_DESC: Record<Platform, string> = {
   instagram:
-    "Feed-ready luxury — clean grids, story-perfect shots, polished captions.",
+    "4:5 carousels people save: clean slides, useful text, polished captions.",
   tiktok:
-    "Scroll-stopping reveals — 9:16 clips and slideshows built for the FYP.",
+    "9:16 slideshows and clips with a hook that stops the scroll.",
 };
 
 function InstagramIcon() {
@@ -121,7 +122,7 @@ function PlatformCard({
       </div>
       <span className={styles.pcardLab}>{PLATFORM_LABEL[platform]}</span>
       <h2 className={styles.pcardTitle}>
-        Larp for {PLATFORM_LABEL[platform]}
+        Post to {PLATFORM_LABEL[platform]}
       </h2>
       <p className={styles.pcardDesc}>{PLATFORM_DESC[platform]}</p>
       <span className={styles.pcardTag}>Slideshow · Video</span>
@@ -204,8 +205,8 @@ function FormatCard({
       </h3>
       <p className={styles.fcardDesc}>
         {isSlide
-          ? "6–7 luxury photos you swipe through. Save the keepers, reroll any you don’t love."
-          : "A stitched 9:16 clip — money, motion, the works. Premium generation."}
+          ? "6 slides that tell one story, with text on each. Redraw any slide you don’t love."
+          : "One 9:16 clip that sets the scene for your post. Premium generation."}
       </p>
       <span
         className={[
@@ -238,12 +239,15 @@ function HomeContent() {
     return f === "slideshow" || f === "video" ? f : null;
   });
   const [withFace, setWithFace] = useState(() => searchParams.get("withFace") === "true");
+  const [brief, setBrief] = useState(() => (searchParams.get("brief") ?? "").slice(0, BRIEF_MAX_LENGTH));
+  const briefReady = cleanBrief(brief).length >= BRIEF_MIN_LENGTH;
   const [uploadId, setUploadId] = useState<string | null>(null);
   const [generating, setGenerating] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [showUpgradeModal, setShowUpgradeModal] = useState(false);
 
   const canGenerate =
+    briefReady &&
     !!platform &&
     !!format &&
     (!withFace || !!uploadId) &&
@@ -274,6 +278,7 @@ function HomeContent() {
         withFace,
         selfieUploadId: uploadId,
         count: 6,
+        brief: cleanBrief(brief),
       });
       router.push(
         `/generation/${res.jobId}?platform=${platform}&format=${format}&withFace=${withFace}`,
@@ -301,7 +306,7 @@ function HomeContent() {
           <div className={styles.modal} onClick={(e) => e.stopPropagation()}>
             <h3 className={styles.modalTitle}>You&rsquo;re out of credits</h3>
             <p className={styles.modalBody}>
-              Upgrade to keep larping.
+              Upgrade to keep posting.
             </p>
             <div className={styles.modalActions}>
               <Link href="/pricing" className={styles.upgradeBtn}>
@@ -321,15 +326,43 @@ function HomeContent() {
           <section className={styles.hero}>
             <span className={styles.eyebrow}>
               <span className={styles.pulse} />
-              Everyone&rsquo;s larping. We made it good.
+              From idea to ready-to-post
             </span>
             <h1 className={styles.h1}>
-              Live your best <em className={styles.serif}>fake</em> life.
+              Say what it&rsquo;s about. Get the whole <em className={styles.serif}>post</em>.
             </h1>
             <p className={styles.sub}>
-              Pick your platform. We&rsquo;ll make a whole post — photos or
-              video, captions, and the sound to use. Larp it till you make it.
+              Describe your post in a sentence. Postwise plans the slides,
+              writes the text on each one, and hands you captions, hashtags and
+              a sound to use.
             </p>
+          </section>
+
+          {/* Brief: what the post is about. Everything else is planned from this. */}
+          <section className={styles.briefSection}>
+            <label htmlFor="brief" className={styles.briefLabel}>
+              What&rsquo;s your post about?
+            </label>
+            <textarea
+              id="brief"
+              className={styles.briefInput}
+              value={brief}
+              onChange={(e) => setBrief(e.target.value.slice(0, BRIEF_MAX_LENGTH))}
+              placeholder={BRIEF_EXAMPLES[0]}
+              rows={2}
+            />
+            <div className={styles.briefMeta}>
+              <div className={styles.examples}>
+                {BRIEF_EXAMPLES.slice(1, 4).map((ex) => (
+                  <button key={ex} type="button" className={styles.example} onClick={() => setBrief(ex)}>
+                    {ex}
+                  </button>
+                ))}
+              </div>
+              <span className={styles.briefCount}>
+                {brief.length}/{BRIEF_MAX_LENGTH}
+              </span>
+            </div>
           </section>
 
           {/* Platform picker */}
@@ -396,8 +429,8 @@ function HomeContent() {
               <h2 className={styles.stepH}>Make it you?</h2>
               <p className={styles.stepSub}>
                 {format === "video"
-                  ? "Upload a selfie to star in the clip — or skip for a faceless money/luxury edit."
-                  : "Upload a selfie and we’ll put you in the scenes — or skip for faceless luxury content."}
+                  ? "Upload a selfie to be in the clip, or skip it and the clip shows your world: hands, objects, places."
+                  : "Upload a selfie and you’ll be in the photos, or skip it and the slides show your world: hands, objects, places."}
               </p>
 
               <div className={styles.faceToggle} role="group" aria-label="Face mode">
@@ -451,7 +484,9 @@ function HomeContent() {
                   {generating && <Spinner size={15} />}
                   {generating ? "Generating…" : "Generate"}
                 </button>
-                <span className={styles.creditCost}>Uses 1 credit</span>
+                <span className={styles.creditCost}>
+                  {briefReady ? "Uses 1 credit" : "Describe your post above first"}
+                </span>
               </div>
             </section>
           )}

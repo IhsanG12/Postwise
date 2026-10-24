@@ -1,13 +1,12 @@
+import type { Db } from "@/lib/supabase";
 import type { PlatformType } from "@/lib/types";
-import { sceneGroup } from "./scenes";
+import type { Vibe } from "./plan";
 
 interface SoundSuggestion {
   title: string;
   meta: string;
   openUrl: string;
 }
-
-type Vibe = "vacation" | "party" | "moody" | "cinematic" | "nostalgic" | "confident" | "dreamy";
 
 interface RealSong {
   title: string;
@@ -50,24 +49,6 @@ const REAL_SONGS: Record<PlatformType, RealSong[]> = {
   ],
 };
 
-// Maps each leftover story-group prefix (see scenes.ts) to the song vibe that
-// fits it, so the suggested sound matches the job's actual setting instead of
-// being picked at random.
-const GROUP_VIBE: Record<string, Vibe> = {
-  gm: "vacation",   // golden-hour Mediterranean yacht/villa
-  mm: "party",      // Monte Carlo casino nightlife
-  am: "moody",      // alpine minimalist snow
-  dn: "moody",      // desert dusk
-  rp: "vacation",   // riviera pastel beach resort
-  mb: "moody",      // monochrome black editorial
-  te: "vacation",   // tropical jungle escape
-  pd: "cinematic",  // penthouse twilight
-  ap: "cinematic",  // bright arctic winter
-  vg: "nostalgic",  // vintage grandeur estate
-  nt: "party",      // neon night city
-  sy: "vacation",   // sunny midday yacht
-};
-
 function openUrlFor(platform: PlatformType, title: string, artist: string): string {
   const query = encodeURIComponent(`${title} ${artist}`);
   // TikTok's own search is real and functional. Instagram doesn't expose a
@@ -81,12 +62,10 @@ function openUrlFor(platform: PlatformType, title: string, artist: string): stri
     : `https://open.spotify.com/search/${query}`;
 }
 
-function pickSounds(platform: PlatformType, sceneTags: string[], count: number): SoundSuggestion[] {
+// The planner picks the post's vibe; songs with that vibe come first.
+export function pickSounds(platform: PlatformType, vibe: Vibe, count: number): SoundSuggestion[] {
   const pool = REAL_SONGS[platform];
-  const group = sceneTags.map(sceneGroup).find((g) => g !== null) ?? null;
-  const vibe = group ? GROUP_VIBE[group] : null;
-
-  const matched = vibe ? pool.filter((s) => s.vibe === vibe) : [];
+  const matched = pool.filter((s) => s.vibe === vibe);
   const rest = pool.filter((s) => !matched.includes(s));
 
   // Prioritize songs matching the job's vibe, then top up with the rest of
@@ -106,10 +85,10 @@ function pickSounds(platform: PlatformType, sceneTags: string[], count: number):
 export async function saveSounds(
   jobId: string,
   platform: PlatformType,
-  sceneTags: string[],
-  db: any
+  vibe: Vibe,
+  db: Db
 ): Promise<void> {
-  const suggestions = pickSounds(platform, sceneTags, 3);
+  const suggestions = pickSounds(platform, vibe, 3);
 
   const rows = suggestions.map((s) => ({
     job_id: jobId,

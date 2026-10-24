@@ -465,3 +465,76 @@
   .generateBar { flex-direction: column; align-items: flex-start; gap: 10px; }
   .generateBtn { width: 100%; text-align: center; }
 }
+
+/* ─── Brief ─────────────────────────────────────────────────────────── */
+
+.briefSection {
+  margin: 0 0 28px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.briefLabel {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--fg);
+}
+
+.briefInput {
+  width: 100%;
+  resize: vertical;
+  min-height: 64px;
+  padding: 14px 16px;
+  font: inherit;
+  font-size: 16px;
+  line-height: 1.45;
+  color: var(--fg);
+  background: var(--surface);
+  border: 1px solid var(--line-strong);
+  border-radius: 14px;
+  transition: border-color 0.15s, box-shadow 0.15s;
+}
+
+.briefInput:focus {
+  outline: none;
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px rgba(184, 148, 95, 0.18);
+}
+
+.briefMeta {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 12px;
+}
+
+.examples {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.example {
+  border: 1px solid var(--line);
+  background: transparent;
+  color: var(--muted);
+  font: inherit;
+  font-size: 12.5px;
+  padding: 5px 11px;
+  border-radius: 999px;
+  cursor: pointer;
+  transition: color 0.15s, border-color 0.15s;
+}
+
+.example:hover {
+  color: var(--fg);
+  border-color: var(--line-strong);
+}
+
+.briefCount {
+  flex-shrink: 0;
+  font-size: 12px;
+  color: var(--muted);
+  font-variant-numeric: tabular-nums;
+}

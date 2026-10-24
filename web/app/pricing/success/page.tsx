@@ -25,7 +25,7 @@ export default function PricingSuccessPage() {
   }, []);
 
   const planLabel =
-    plan === 'pro' ? 'Pro Larper' : plan === 'larper' ? 'Larper' : null;
+    plan === 'pro' ? 'Pro' : plan === 'creator' ? 'Creator' : null;
 
   const creditLine = unlimited
     ? 'Unlimited credits. Go wild.'
@@ -43,7 +43,7 @@ export default function PricingSuccessPage() {
               <div className={styles.emoji} aria-hidden="true">🤍</div>
 
               <h1 className={styles.title}>
-                You&rsquo;re a larper now.
+                You&rsquo;re all set.
               </h1>
 
               {planLabel && (
@@ -59,7 +59,7 @@ export default function PricingSuccessPage() {
               )}
 
               <Link href="/" className={styles.startBtn}>
-                Start larping
+                Make a post
               </Link>
 
               <Link href="/pricing" className={styles.backLink}>

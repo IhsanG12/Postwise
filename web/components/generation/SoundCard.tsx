@@ -28,7 +28,7 @@ export default function SoundCard({ sounds, platform }: Props) {
         Sounds to use
       </h4>
       <p className={styles.hint}>
-        Trending now. Add the sound inside {platformLabel} for reach.
+        Songs that fit this post&rsquo;s mood. Add one inside {platformLabel}.
       </p>
       {sounds.map((s) => (
         <a

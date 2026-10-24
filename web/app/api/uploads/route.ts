@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getCurrentUser } from "@/lib/auth";
-import { supabase } from "@/lib/supabase";
+import { supabase, db } from "@/lib/supabase";
 
 const ALLOWED_TYPES = ["image/jpeg", "image/png", "image/webp"];
 const MAX_BYTES = 10 * 1024 * 1024; // 10 MB
@@ -38,8 +38,6 @@ export async function POST(req: NextRequest) {
   const ext = file.type.split("/")[1].replace("jpeg", "jpg");
   const storagePath = `${user.id}/${Date.now()}.${ext}`;
   const buffer = Buffer.from(await file.arrayBuffer());
-
-  const db = supabase as any;
 
   const { error: storageError } = await supabase.storage
     .from("selfies")

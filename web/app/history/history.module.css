@@ -125,6 +125,17 @@
   color: var(--muted);
 }
 
+.brief {
+  margin: 6px 0 0;
+  font-size: 13.5px;
+  line-height: 1.4;
+  color: var(--fg);
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
 .cardActions {
   display: flex;
   align-items: center;

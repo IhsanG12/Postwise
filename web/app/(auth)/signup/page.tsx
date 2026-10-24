@@ -41,7 +41,7 @@ export default function SignupPage() {
         <div className={styles.card}>
           <div className={styles.brand}>
             <span className={styles.dot} />
-            Larp AI
+            Postwise
           </div>
           <h1 className={styles.title}>Check your inbox</h1>
           <p className={styles.subtitle}>
@@ -61,9 +61,9 @@ export default function SignupPage() {
       <div className={styles.card}>
         <div className={styles.brand}>
           <span className={styles.dot} />
-          Larp AI
+          Postwise
         </div>
-        <h1 className={styles.title}>Start larping</h1>
+        <h1 className={styles.title}>Start posting</h1>
         <p className={styles.subtitle}>
           Create your account — first 3 generations free.
         </p>

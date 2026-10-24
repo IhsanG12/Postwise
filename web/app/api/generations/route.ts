@@ -1,8 +1,13 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextRequest, NextResponse, after } from "next/server";
 import { getCurrentUser } from "@/lib/auth";
-import { supabase } from "@/lib/supabase";
+import { db } from "@/lib/supabase";
 import { startGenerationJob } from "@/lib/generation/job";
+import { validateBrief, cleanBrief } from "@/lib/brief";
 import type { PlatformType, FormatType } from "@/lib/types";
+
+// The job keeps running after the 202 goes out (see `after` below), so the
+// function needs room for a full slideshow: ~50s per image, two at a time.
+export const maxDuration = 300;
 
 const PLATFORMS: PlatformType[] = ["instagram", "tiktok"];
 const FORMATS: FormatType[] = ["slideshow", "video"];
@@ -27,12 +32,10 @@ export async function GET(req: NextRequest) {
   const limit = Math.min(Math.max(Number(searchParams.get("limit")) || 20, 1), 50);
   const offset = Math.max(Number(searchParams.get("offset")) || 0, 0);
 
-  const db = supabase as any;
-
   // Fetch one extra row past `limit` to know whether there's another page.
   const { data: jobs, error: jobsError } = await db
     .from("jobs")
-    .select("id, status, platform, format, count, with_face, created_at")
+    .select("id, status, platform, format, count, with_face, brief, created_at")
     .eq("user_id", user.id)
     .order("created_at", { ascending: false })
     .range(offset, offset + limit) as {
@@ -43,6 +46,7 @@ export async function GET(req: NextRequest) {
         format: FormatType;
         count: number;
         with_face: boolean;
+        brief: string | null;
         created_at: string;
       }[] | null;
       error: unknown;
@@ -82,6 +86,7 @@ export async function GET(req: NextRequest) {
       format: j.format,
       count: j.count,
       withFace: j.with_face,
+      brief: j.brief,
       createdAt: j.created_at,
       thumbUrl: thumbByJob.get(j.id) ?? null,
     })),
@@ -102,7 +107,12 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "invalid_request", message: "Expected JSON body." }, { status: 400 });
   }
 
-  const { platform, format, withFace, selfieUploadId, count } = body as Record<string, unknown>;
+  const { platform, format, withFace, selfieUploadId, count, brief } = body as Record<string, unknown>;
+
+  const briefError = validateBrief(brief);
+  if (briefError) {
+    return NextResponse.json({ error: "invalid_request", message: briefError }, { status: 400 });
+  }
 
   if (!PLATFORMS.includes(platform as PlatformType)) {
     return NextResponse.json({ error: "invalid_request", message: "platform must be 'instagram' or 'tiktok'." }, { status: 400 });
@@ -119,8 +129,6 @@ export async function POST(req: NextRequest) {
   if (format === "slideshow" && (typeof count !== "number" || count < 1 || count > 10)) {
     return NextResponse.json({ error: "invalid_request", message: "count must be a number between 1 and 10." }, { status: 400 });
   }
-
-  const db = supabase as any;
 
   // Read current credits.
   const { data: userData, error: userError } = await db
@@ -161,6 +169,7 @@ export async function POST(req: NextRequest) {
       with_face: withFace,
       selfie_upload_id: uploadUuid,
       count: format === "slideshow" ? count : 1,
+      brief: cleanBrief(brief as string),
     })
     .select("id")
     .single() as { data: { id: string } | null; error: unknown };
@@ -172,10 +181,11 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "server_error" }, { status: 500 });
   }
 
-  // Fire background job without awaiting — response goes out immediately.
-  startGenerationJob(job.id).catch((err) =>
-    console.error("[/api/generations] Background job error", err)
-  );
+  // Respond right away and run the job after the response. A bare un-awaited
+  // promise can be frozen mid-job on serverless hosts once the response is
+  // sent; `after` keeps the function alive until the job settles.
+  // startGenerationJob catches its own errors and refunds the credit.
+  after(() => startGenerationJob(job.id));
 
   return NextResponse.json(
     {

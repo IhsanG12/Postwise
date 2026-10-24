@@ -16,8 +16,8 @@ const instrumentSerif = Instrument_Serif({
 });
 
 export const metadata: Metadata = {
-  title: "Larp AI",
-  description: "AI luxury content for Instagram & TikTok",
+  title: "Postwise",
+  description: "Turn an idea into a ready-to-post TikTok or Instagram carousel: slides, text, captions, hashtags and a sound.",
   icons: { icon: "/favicon.svg" },
 };
 

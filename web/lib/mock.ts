@@ -33,13 +33,13 @@ export const mockJobProcessing: JobPollingResponse = {
   progress: 0.5,
 };
 
-const MOCK_SCENES = [
-  { bg: "0a0910", sceneTag: "supercar_night" },
-  { bg: "241d12", sceneTag: "yacht_deck" },
-  { bg: "27384a", sceneTag: "rooftop_pool" },
-  { bg: "3a2418", sceneTag: "private_jet" },
-  { bg: "163349", sceneTag: "penthouse_view" },
-  { bg: "241127", sceneTag: "hotel_lobby" },
+const MOCK_SLIDES = [
+  { bg: "e9e1d3", text: "5 things that saved my finals" },
+  { bg: "d8dfd6", text: "Study in 50-minute blocks, then actually leave the desk" },
+  { bg: "dcd6e4", text: "Make a one-page cheat sheet even if you can't use it" },
+  { bg: "e4dad2", text: "Teach the hardest topic to a friend out loud" },
+  { bg: "d6dde4", text: "Sleep beats one more all-nighter" },
+  { bg: "e2e0d0", text: "Plan tomorrow before you close the laptop" },
 ];
 
 export const mockJobComplete: JobPollingResponse = {
@@ -47,39 +47,34 @@ export const mockJobComplete: JobPollingResponse = {
   status: "complete",
   platform: "instagram",
   format: "slideshow",
-  assets: MOCK_SCENES.map((s, i) => ({
+  post: {
+    brief: "5 study tips that got me through finals week",
+    title: "Finals week survival",
+    hashtags: ["studytok", "finalsweek", "studytips"],
+  },
+  assets: MOCK_SLIDES.map((s, i) => ({
     id: `ast_0${i + 1}`,
     type: "image" as const,
-    url: `https://placehold.co/1080x1350/${s.bg}/fafaf7`,
-    thumbUrl: `https://placehold.co/540x675/${s.bg}/fafaf7`,
+    url: `https://placehold.co/1080x1350/${s.bg}/0b0b0c`,
+    thumbUrl: `https://placehold.co/540x675/${s.bg}/0b0b0c`,
     width: 1080,
     height: 1350,
-    sceneTag: s.sceneTag,
+    sceneTag: `slide_0${i + 1}`,
+    slideText: s.text,
     rerollable: true,
   })),
   captions: [
-    { id: "cap_1", text: "Just another Tuesday 🤍", tone: "understated" },
-    {
-      id: "cap_2",
-      text: "POV: the grind finally paid off",
-      tone: "aspirational",
-    },
-    { id: "cap_3", text: "soft life, hard launch", tone: "playful" },
+    { id: "cap_1", text: "saving this for every exam season", tone: "relatable" },
+    { id: "cap_2", text: "tip 3 is the one nobody talks about", tone: "curious" },
+    { id: "cap_3", text: "send this to your study group", tone: "helpful" },
   ],
   sounds: [
     {
       id: "snd_1",
-      title: "luxury ambient (sped up)",
-      meta: "trending · +340% this week",
+      title: "No One Noticed — The Marías",
+      meta: "dreamy",
       platform: "instagram",
-      openUrl: "https://www.instagram.com/reels/audio/placeholder",
-    },
-    {
-      id: "snd_2",
-      title: "original sound — wang.audios",
-      meta: "used in 2.1M videos",
-      platform: "instagram",
-      openUrl: "https://www.instagram.com/reels/audio/placeholder2",
+      openUrl: "https://open.spotify.com/search/No%20One%20Noticed%20The%20Mar%C3%ADas",
     },
   ],
 };

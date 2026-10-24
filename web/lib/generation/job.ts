@@ -1,17 +1,20 @@
-import { supabase } from "@/lib/supabase";
+import { type Db, db } from "@/lib/supabase";
 import { generateImages, rerollSingleImage } from "./images";
 import { generateVideo } from "./video";
-import { generateCaptions } from "./captions";
+import { saveCaptions } from "./captions";
 import { saveSounds } from "./sounds";
+import { planPost, BriefRejectedError } from "./plan";
 import type { PlatformType, FormatType } from "@/lib/types";
 
-const db = supabase as any;
+// Prefix stored in jobs.error when the planner refuses a brief, so
+// GET /api/generations/{jobId} can show the creator the reason.
+export const BRIEF_REJECTED_PREFIX = "brief_rejected:";
 
 export async function startGenerationJob(jobId: string): Promise<void> {
   try {
     const { data: job } = await db
       .from("jobs")
-      .select("platform, format, with_face, selfie_upload_id, count")
+      .select("platform, format, with_face, selfie_upload_id, count, brief")
       .eq("id", jobId)
       .single() as {
         data: {
@@ -20,35 +23,36 @@ export async function startGenerationJob(jobId: string): Promise<void> {
           with_face: boolean;
           selfie_upload_id: string | null;
           count: number;
+          brief: string | null;
         } | null;
       };
 
     if (!job) throw new Error(`Job ${jobId} not found`);
+    if (!job.brief) throw new Error(`Job ${jobId} has no brief`);
 
-    // Generate assets (video: one Replicate clip; slideshow: N images) and
-    // collect scene tags — same shape either way so captions/sounds below
-    // don't need to know which path ran.
-    const assets = job.format === "video"
-      ? await generateVideo(jobId, job.platform, job.with_face, job.selfie_upload_id, db)
-      : await generateImages(
-          jobId,
-          job.platform,
-          job.format,
-          job.with_face,
-          job.selfie_upload_id,
-          job.count,
-          db
-        );
+    // 1. Plan the whole post from the brief (one text-model call).
+    const plan = await planPost({
+      brief: job.brief,
+      platform: job.platform,
+      format: job.format,
+      count: job.count,
+      withFace: job.with_face,
+    });
+    // Saved so a reroll can redraw a slide from the same plan later.
+    await db.from("jobs").update({ plan, progress: 0.05 }).eq("id", jobId);
 
-    const sceneTags = assets.map((a) => a.sceneTag);
+    // 2. Make the images or the clip, then 3. store captions and sounds.
+    if (job.format === "video") {
+      await generateVideo(jobId, job.platform, plan, job.with_face, job.selfie_upload_id, db);
+    } else {
+      await generateImages(jobId, job.platform, plan, job.with_face, job.selfie_upload_id, db);
+    }
 
-    // Generate captions and sounds in parallel.
     await Promise.all([
-      generateCaptions(jobId, job.platform, sceneTags, db),
-      saveSounds(jobId, job.platform, sceneTags, db),
+      saveCaptions(jobId, plan.captions, db),
+      saveSounds(jobId, job.platform, plan.vibe, db),
     ]);
 
-    // Mark job complete.
     await db.from("jobs").update({
       status: "complete",
       progress: 1,
@@ -56,10 +60,13 @@ export async function startGenerationJob(jobId: string): Promise<void> {
     }).eq("id", jobId);
 
   } catch (err) {
-    console.error("[generation] Job failed", jobId, err);
+    const rejected = err instanceof BriefRejectedError;
+    if (!rejected) console.error("[generation] Job failed", jobId, err);
     await db.from("jobs").update({
       status: "failed",
-      error: err instanceof Error ? err.message : "generation_failed",
+      error: rejected
+        ? `${BRIEF_REJECTED_PREFIX} ${err.reason}`
+        : err instanceof Error ? err.message : "generation_failed",
     }).eq("id", jobId);
 
     // The credit was charged up front in POST /api/generations before this
@@ -68,7 +75,7 @@ export async function startGenerationJob(jobId: string): Promise<void> {
   }
 }
 
-async function refundCredit(jobId: string, db: any): Promise<void> {
+async function refundCredit(jobId: string, db: Db): Promise<void> {
   const { data: job } = await db
     .from("jobs")
     .select("user_id")
@@ -98,7 +105,7 @@ export async function rerollAsset(jobId: string, assetId: string): Promise<void>
   }
 }
 
-async function refundReroll(jobId: string, db: any): Promise<void> {
+async function refundReroll(jobId: string, db: Db): Promise<void> {
   const { data: job } = await db
     .from("jobs")
     .select("user_id")

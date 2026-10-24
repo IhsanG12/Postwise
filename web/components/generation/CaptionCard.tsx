@@ -7,15 +7,18 @@ import styles from './CaptionCard.module.css';
 
 interface Props {
   captions: Caption[];
+  hashtags: string[];
   platform: 'instagram' | 'tiktok';
 }
 
-export default function CaptionCard({ captions, platform }: Props) {
+export default function CaptionCard({ captions, hashtags, platform }: Props) {
+  const tagLine = hashtags.map((t) => `#${t}`).join(' ');
+
   const [copied, setCopied] = useState<string | null>(null);
 
-  function handleCopy(text: string, id: string) {
+  function handleCopy(text: string, id: string, label = 'Caption copied') {
     navigator.clipboard.writeText(text).catch(() => {});
-    toast('Caption copied');
+    toast(label);
     setCopied(id);
     setTimeout(() => setCopied((prev) => (prev === id ? null : prev)), 2000);
   }
@@ -34,10 +37,10 @@ export default function CaptionCard({ captions, platform }: Props) {
         >
           <path d="M4 7h16M4 12h10M4 17h7" />
         </svg>
-        Caption ideas
+        Caption + hashtags
       </h4>
       <p className={styles.hint}>
-        Tap to copy. Tuned for{' '}
+        Tap to copy{tagLine ? ' — the hashtags come with it' : ''}. Tuned for{' '}
         {platform === 'instagram' ? 'Instagram' : 'TikTok'}.
       </p>
       {captions.map((cap) => (
@@ -46,8 +49,10 @@ export default function CaptionCard({ captions, platform }: Props) {
           className={styles.cap}
           role="button"
           tabIndex={0}
-          onClick={() => handleCopy(cap.text, cap.id)}
-          onKeyDown={(e) => e.key === 'Enter' && handleCopy(cap.text, cap.id)}
+          onClick={() => handleCopy(tagLine ? `${cap.text}\n\n${tagLine}` : cap.text, cap.id)}
+          onKeyDown={(e) =>
+            e.key === 'Enter' && handleCopy(tagLine ? `${cap.text}\n\n${tagLine}` : cap.text, cap.id)
+          }
         >
           <div className={styles.capBody}>
             <span className={styles.text}>{cap.text}</span>
@@ -58,6 +63,20 @@ export default function CaptionCard({ captions, platform }: Props) {
           </span>
         </div>
       ))}
+      {tagLine && (
+        <div
+          className={styles.tags}
+          role="button"
+          tabIndex={0}
+          onClick={() => handleCopy(tagLine, 'tags', 'Hashtags copied')}
+          onKeyDown={(e) => e.key === 'Enter' && handleCopy(tagLine, 'tags', 'Hashtags copied')}
+        >
+          <span className={styles.tagText}>{tagLine}</span>
+          <span className={[styles.copy, copied === 'tags' ? styles.copyDone : ''].filter(Boolean).join(' ')}>
+            {copied === 'tags' ? 'Copied!' : 'Copy'}
+          </span>
+        </div>
+      )}
     </div>
   );
 }

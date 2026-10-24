@@ -1,7 +1,9 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextRequest, NextResponse, after } from "next/server";
 import { getCurrentUser } from "@/lib/auth";
-import { supabase } from "@/lib/supabase";
+import { db } from "@/lib/supabase";
 import { rerollAsset } from "@/lib/generation/job";
+
+export const maxDuration = 120;
 
 export async function POST(
   req: NextRequest,
@@ -15,8 +17,6 @@ export async function POST(
   const { jobId, assetId } = await params;
   const jobUuid = jobId.startsWith("gen_") ? jobId.slice(4) : jobId;
   const assetUuid = assetId.startsWith("ast_") ? assetId.slice(4) : assetId;
-
-  const db = supabase as any;
 
   // Verify the job exists and belongs to this user.
   const { data: job, error: jobError } = await db
@@ -69,10 +69,8 @@ export async function POST(
     return NextResponse.json({ error: "server_error" }, { status: 500 });
   }
 
-  // Fire background regen without awaiting — response goes out immediately.
-  rerollAsset(jobUuid, assetUuid).catch((err) =>
-    console.error("[/api/.../reroll] Background reroll error", err)
-  );
+  // Same as job creation: run after the response, but keep the function alive.
+  after(() => rerollAsset(jobUuid, assetUuid));
 
   return NextResponse.json(
     {

@@ -1,11 +1,10 @@
 'use client';
 
-import { useCallback, useEffect, useState } from 'react';
+import { useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useGeneration } from '@/lib/hooks/useGeneration';
-import { createGeneration, ApiError } from '@/lib/api';
-import Spinner from '@/components/ui/Spinner';
+import { editPostHref } from '@/lib/links';
 import styles from './generation.module.css';
 
 const PLATFORM_LABEL: Record<'instagram' | 'tiktok', string> = {
@@ -35,9 +34,6 @@ export default function GenerationClient({
 }: Props) {
   const router = useRouter();
   const gen = useGeneration(jobId);
-  const [retrying, setRetrying] = useState(false);
-  const [showUpgrade, setShowUpgrade] = useState(false);
-
   // When the job completes, hand off to the rich results page
   useEffect(() => {
     if (gen.status === 'complete') {
@@ -47,69 +43,20 @@ export default function GenerationClient({
     }
   }, [gen.status, jobId, platform, format, router]);
 
-  const handleRetry = useCallback(async () => {
-    setRetrying(true);
-    try {
-      const res = await createGeneration({
-        platform,
-        format,
-        withFace,
-        selfieUploadId: null,
-        count: 6,
-      });
-      router.push(
-        `/generation/${res.jobId}?platform=${platform}&format=${format}&withFace=${withFace}`,
-      );
-    } catch (err) {
-      if (
-        err instanceof ApiError &&
-        (err.status === 402 || err.code === 'insufficient_credits')
-      ) {
-        setShowUpgrade(true);
-      }
-      setRetrying(false);
-    }
-  }, [platform, format, withFace, router]);
+  // The selfie is deleted after use, so "try again" goes back to the picker
+  // with the brief filled in rather than silently re-running without a face.
+  const editHref = editPostHref({ platform, format, withFace, brief: gen.brief });
 
-  // treat 'complete' as loading — we're mid-redirect, keep shimmer visible
-  const isLoading = gen.status === 'polling' || gen.status === 'complete';
   const isFailed = gen.status === 'failed';
 
   const title =
-    format === 'video' ? 'Making your clip…' : 'Making your larp…';
+    format === 'video' ? 'Making your clip…' : 'Making your post…';
 
   const isVideo = format === 'video';
   const tileCount = isVideo ? 1 : SHIMMER_COUNT;
 
   return (
     <>
-      {showUpgrade && (
-        <div
-          className={styles.modalOverlay}
-          onClick={() => setShowUpgrade(false)}
-        >
-          <div className={styles.modal} onClick={(e) => e.stopPropagation()}>
-            <h3 className={styles.modalTitle}>
-              You&rsquo;re out of credits
-            </h3>
-            <p className={styles.modalBody}>
-              Upgrade to keep larping.
-            </p>
-            <div className={styles.modalActions}>
-              <Link href="/pricing" className={styles.upgradeBtn}>
-                Upgrade
-              </Link>
-              <button
-                className={styles.cancelBtn}
-                onClick={() => setShowUpgrade(false)}
-              >
-                Not now
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
       <div className={styles.wrap}>
         <Link href="/" className={styles.back}>
           <svg
@@ -152,16 +99,14 @@ export default function GenerationClient({
 
         {isFailed ? (
           <div className={styles.errorState}>
-            <p className={styles.hiccup}>Generation hiccuped — try again</p>
-            <button
-              className={styles.retryBtn}
-              onClick={handleRetry}
-              disabled={retrying}
-              style={{ display: 'inline-flex', alignItems: 'center', gap: 8 }}
-            >
-              {retrying && <Spinner size={15} />}
-              {retrying ? 'Retrying…' : 'Try again'}
-            </button>
+            <p className={styles.hiccup}>
+              {gen.error === 'brief_rejected'
+                ? gen.message || 'Postwise can’t make this post.'
+                : 'Generation hiccuped. Your credit was refunded.'}
+            </p>
+            <Link href={editHref} className={styles.retryBtn}>
+              {gen.error === 'brief_rejected' ? 'Edit the brief' : 'Try again'}
+            </Link>
           </div>
         ) : (
           <div className={styles.resultsGrid}>

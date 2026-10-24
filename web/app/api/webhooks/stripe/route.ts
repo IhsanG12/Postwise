@@ -1,14 +1,18 @@
 import { NextRequest, NextResponse } from "next/server";
 import Stripe from "stripe";
-import { supabase } from "@/lib/supabase";
+import { db } from "@/lib/supabase";
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!);
 
 // Credits granted per plan on subscription start.
 const PLAN_CREDITS: Record<string, number> = {
-  larper: 50,
-  pro:    0, // Pro users get unlimited = true instead of a credit count
+  creator: 50,
+  pro:     0, // Pro users get unlimited = true instead of a credit count
 };
+
+// Checkout sessions started before the rename carry plan "larper" in their
+// metadata; the database enum value is now "creator" (migration 005).
+const LEGACY_PLAN_NAMES: Record<string, string> = { larper: "creator" };
 
 export async function POST(req: NextRequest) {
   const signature = req.headers.get("stripe-signature");
@@ -28,15 +32,14 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "invalid_signature" }, { status: 400 });
   }
 
-  const db = supabase as any;
-
   switch (event.type) {
     case "checkout.session.completed": {
       const session = event.data.object as Stripe.Checkout.Session;
       const userId = session.metadata?.userId;
-      const plan   = session.metadata?.plan;
+      const rawPlan = session.metadata?.plan;
+      const plan    = rawPlan ? LEGACY_PLAN_NAMES[rawPlan] ?? rawPlan : undefined;
 
-      if (!userId || !plan) {
+      if (!userId || !plan || !(plan in PLAN_CREDITS)) {
         console.error("[webhook/stripe] Missing metadata on session", session.id);
         break;
       }

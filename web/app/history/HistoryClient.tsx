@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { listGenerations, deleteGeneration, type HistoryJob } from '@/lib/api';
 import Spinner from '@/components/ui/Spinner';
+import { editPostHref } from '@/lib/links';
 import styles from './history.module.css';
 
 const PAGE_SIZE = 20;
@@ -111,7 +112,7 @@ export default function HistoryClient() {
 
       {jobs.length === 0 ? (
         <div className={styles.emptyState}>
-          <p>You haven&rsquo;t made a larp yet.</p>
+          <p>You haven&rsquo;t made a post yet.</p>
           <Link href="/" className={styles.emptyCta}>
             Make your first one
           </Link>
@@ -158,10 +159,11 @@ export default function HistoryClient() {
                     </span>
                     <span className={styles.date}>{formatDate(job.createdAt)}</span>
                   </div>
+                  {job.brief && <p className={styles.brief}>{job.brief}</p>}
 
                   <div className={styles.cardActions}>
                     <Link
-                      href={`/?platform=${job.platform}&format=${job.format}&withFace=${job.withFace}`}
+                      href={editPostHref(job)}
                       className={styles.regenerateLink}
                     >
                       Regenerate

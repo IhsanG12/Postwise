@@ -104,6 +104,22 @@
   cursor: not-allowed;
 }
 
+.textToggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+  color: var(--fg);
+  cursor: pointer;
+  user-select: none;
+}
+
+.textToggle input {
+  width: 16px;
+  height: 16px;
+  accent-color: var(--fg);
+}
+
 .generateNewBtn {
   display: inline-block;
   border: 1px solid var(--line-strong);
@@ -164,6 +180,8 @@
 }
 
 .retryBtn {
+  display: inline-block;
+  text-decoration: none;
   border: none;
   cursor: pointer;
   font-weight: 600;

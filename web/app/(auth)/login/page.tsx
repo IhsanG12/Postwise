@@ -34,7 +34,7 @@ export default function LoginPage() {
       <div className={styles.card}>
         <div className={styles.brand}>
           <span className={styles.dot} />
-          Larp AI
+          Postwise
         </div>
         <h1 className={styles.title}>Welcome back</h1>
         <p className={styles.subtitle}>Sign in to your account to continue.</p>

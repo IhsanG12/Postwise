@@ -1,6 +1,7 @@
 import Replicate from "replicate";
-import { supabase } from "@/lib/supabase";
-import { pickScenes, getDimensions } from "./scenes";
+import { supabase, type Db } from "@/lib/supabase";
+import { getDimensions, buildVideoPrompt } from "./style";
+import type { PostPlan } from "./plan";
 import type { PlatformType } from "@/lib/types";
 
 // Replicate gives us multiple video models under one API key, so swapping
@@ -24,13 +25,13 @@ interface GeneratedAsset {
 export async function generateVideo(
   jobId: string,
   platform: PlatformType,
+  plan: PostPlan,
   withFace: boolean,
   selfieUploadId: string | null,
-  db: any
+  db: Db
 ): Promise<GeneratedAsset[]> {
-  // No style/theme system anymore — draw the setting from the same unified
-  // scene pool images use, same as pickScenes() elsewhere in lib/generation.
-  const [scene] = pickScenes(1, withFace, []);
+  // A video job's plan always has exactly one slide (see plan.ts).
+  const [scene] = plan.slides;
   const { width, height } = getDimensions(platform);
 
   let selfieUrl: string | null = null;
@@ -49,15 +50,7 @@ export async function generateVideo(
     }
   }
 
-  const peopleDirective = withFace
-    ? "The same person shown in the reference image appears in the clip, naturally moving through the scene " +
-      "(walking into frame, sitting down, turning toward camera) — keep their face, identity, and features " +
-      "consistent with the reference. Natural, anatomically correct motion, no distorted limbs, no CGI/render look."
-    : "No people, faceless luxury scene, camera gliding smoothly through the environment.";
-
-  const prompt =
-    `Cinematic luxury lifestyle video clip, 5-8 seconds, smooth natural camera motion, shot on a real camera. ` +
-    `${scene.prompt} ${peopleDirective}`;
+  const prompt = buildVideoPrompt(plan, scene, withFace);
 
   const aspectRatio = height > width ? "9:16" : "16:9";
 

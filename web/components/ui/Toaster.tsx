@@ -23,8 +23,8 @@ export default function Toaster() {
         2800
       );
     }
-    window.addEventListener('larp:toast', handle);
-    return () => window.removeEventListener('larp:toast', handle);
+    window.addEventListener('postwise:toast', handle);
+    return () => window.removeEventListener('postwise:toast', handle);
   }, []);
 
   if (!toasts.length) return null;

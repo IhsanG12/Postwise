@@ -1,7 +1,7 @@
-// Database row types for Larp AI.
+// Database row types for Postwise.
 // Keep in sync with planning/migrations/*.sql.
 
-export type PlanType = 'free' | 'larper' | 'pro'
+export type PlanType = 'free' | 'creator' | 'pro'
 export type JobStatus = 'processing' | 'complete' | 'failed'
 export type PlatformType = 'instagram' | 'tiktok'
 export type FormatType = 'slideshow' | 'video'
@@ -36,6 +36,8 @@ export interface Job {
   with_face: boolean
   selfie_upload_id: string | null
   count: number
+  brief: string | null
+  plan: unknown | null // PostPlan (lib/generation/plan.ts); jsonb in the DB
   error: string | null
   created_at: string
   completed_at: string | null
@@ -50,6 +52,7 @@ export interface Asset {
   width: number | null
   height: number | null
   scene_tag: string | null
+  slide_text: string | null
   rerollable: boolean
   created_at: string
 }
@@ -95,7 +98,7 @@ export type Database = {
       }
       jobs: {
         Row: Job
-        Insert: Omit<Job, 'id' | 'created_at' | 'completed_at' | 'error'>
+        Insert: Omit<Job, 'id' | 'created_at' | 'completed_at' | 'error' | 'plan'>
         Update: Partial<Omit<Job, 'id' | 'user_id'>>
         Relationships: []
       }

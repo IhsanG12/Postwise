@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getCurrentUser } from "@/lib/auth";
-import { supabase } from "@/lib/supabase";
+import { supabase, db } from "@/lib/supabase";
+import { BRIEF_REJECTED_PREFIX } from "@/lib/generation/job";
+import type { PostPlan } from "@/lib/generation/plan";
 import type { Job, Asset, Caption, Sound } from "@/lib/types";
 
 export async function GET(
@@ -16,13 +18,17 @@ export async function GET(
   // Strip the "gen_" prefix to get the DB UUID.
   const jobUuid = jobId.startsWith("gen_") ? jobId.slice(4) : jobId;
 
-  const db = supabase as any;
-
   const { data: job, error: jobError } = await db
     .from("jobs")
-    .select("id, user_id, status, progress, platform, format, error")
+    .select("id, user_id, status, progress, platform, format, error, brief, plan")
     .eq("id", jobUuid)
-    .single() as { data: Pick<Job, "id" | "user_id" | "status" | "progress" | "platform" | "format" | "error"> | null; error: unknown };
+    .single() as {
+      data: (Pick<Job, "id" | "user_id" | "status" | "progress" | "platform" | "format" | "error"> & {
+        brief: string | null;
+        plan: PostPlan | null;
+      }) | null;
+      error: unknown;
+    };
 
   if (jobError || !job) {
     return NextResponse.json({ error: "not_found" }, { status: 404 });
@@ -37,15 +43,32 @@ export async function GET(
   }
 
   if (job.status === "failed") {
-    return NextResponse.json({ jobId, status: "failed", error: "generation_failed", retryable: true });
+    // The planner refused the brief: show its reason, and don't offer a
+    // retry of the same brief (it would just be refused again).
+    if (job.error?.startsWith(BRIEF_REJECTED_PREFIX)) {
+      return NextResponse.json({
+        jobId,
+        status: "failed",
+        error: "brief_rejected",
+        message: job.error.slice(BRIEF_REJECTED_PREFIX.length).trim(),
+        retryable: false,
+        brief: job.brief,
+      });
+    }
+    return NextResponse.json({ jobId, status: "failed", error: "generation_failed", retryable: true, brief: job.brief });
   }
 
   // Fetch assets, captions, and sounds in parallel.
-  const [assetsRes, captionsRes, soundsRes] = await Promise.all([
-    db.from("assets").select("id, type, url, thumb_url, width, height, scene_tag, rerollable").eq("job_id", jobUuid) as Promise<{ data: Asset[] | null; error: unknown }>,
-    db.from("captions").select("id, text, tone").eq("job_id", jobUuid) as Promise<{ data: Caption[] | null; error: unknown }>,
-    db.from("sounds").select("id, title, meta, platform, open_url").eq("job_id", jobUuid) as Promise<{ data: Sound[] | null; error: unknown }>,
-  ]);
+  // Assets are ordered by scene_tag ("slide_01", "slide_02", …) = slide order.
+  const [assetsRes, captionsRes, soundsRes] = (await Promise.all([
+    db.from("assets").select("id, type, url, thumb_url, width, height, scene_tag, slide_text, rerollable").eq("job_id", jobUuid).order("scene_tag"),
+    db.from("captions").select("id, text, tone").eq("job_id", jobUuid),
+    db.from("sounds").select("id, title, meta, platform, open_url").eq("job_id", jobUuid),
+  ])) as [
+    { data: Asset[] | null; error: unknown },
+    { data: Caption[] | null; error: unknown },
+    { data: Sound[] | null; error: unknown },
+  ];
 
   if (assetsRes.error || captionsRes.error || soundsRes.error) {
     console.error("[/api/generations/:jobId] Failed to fetch results", assetsRes.error, captionsRes.error, soundsRes.error);
@@ -57,6 +80,11 @@ export async function GET(
     status: "complete",
     platform: job.platform,
     format: job.format,
+    post: {
+      brief: job.brief,
+      title: job.plan?.title ?? null,
+      hashtags: job.plan?.hashtags ?? [],
+    },
     assets: (assetsRes.data ?? []).map((a) => ({
       id: `ast_${a.id}`,
       type: a.type,
@@ -65,6 +93,7 @@ export async function GET(
       width: a.width,
       height: a.height,
       sceneTag: a.scene_tag,
+      slideText: a.slide_text,
       rerollable: a.rerollable,
     })),
     captions: (captionsRes.data ?? []).map((c) => ({
@@ -93,8 +122,6 @@ export async function DELETE(
 
   const { jobId } = await params;
   const jobUuid = jobId.startsWith("gen_") ? jobId.slice(4) : jobId;
-
-  const db = supabase as any;
 
   const { data: job, error: jobError } = await db
     .from("jobs")

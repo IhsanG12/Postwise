@@ -8,11 +8,11 @@ import { getMe, createCheckout, ApiError } from '@/lib/api';
 import Spinner from '@/components/ui/Spinner';
 import styles from './pricing.module.css';
 
-type PlanId = 'free' | 'larper' | 'pro';
+type PlanId = 'free' | 'creator' | 'pro';
 
 interface Plan {
   id: PlanId;
-  apiId: 'larper' | 'pro' | null;
+  apiId: 'creator' | 'pro' | null;
   name: string;
   price: string;
   priceNote: string;
@@ -27,49 +27,49 @@ const PLANS: Plan[] = [
   {
     id: 'free',
     apiId: null,
-    name: 'Clipper',
+    name: 'Free',
     price: 'Free',
     priceNote: 'forever',
     credits: '3 generations / day',
     highlight: false,
     features: [
       'Slideshow format',
-      'Basic scene library',
-      '6 scenes per set',
+      'A full post plan from your brief',
+      '6 slides per post',
       'Instagram + TikTok',
     ],
     cta: null,
   },
   {
-    id: 'larper',
-    apiId: 'larper',
-    name: 'Larper',
+    id: 'creator',
+    apiId: 'creator',
+    name: 'Creator',
     price: '$12',
     priceNote: '/ month',
     credits: '50 credits / month',
     badge: 'Most popular',
     highlight: true,
     features: [
-      'Full scene library',
       'Slideshow + video formats',
-      'Caption ideas + sound picks',
-      '5 rerolls per month',
+      'Slide text, captions + hashtags',
+      'Sound picks for every post',
+      '5 slide redraws per month',
     ],
-    cta: 'Go Larper',
+    cta: 'Go Creator',
   },
   {
     id: 'pro',
     apiId: 'pro',
-    name: 'Pro Larper',
+    name: 'Pro',
     price: '$29',
     priceNote: '/ month',
     credits: 'Unlimited credits',
     highlight: false,
     features: [
-      'Everything in Larper',
+      'Everything in Creator',
       'Video format (TikTok 9:16)',
       'Priority generation',
-      'Unlimited rerolls',
+      'Unlimited redraws',
     ],
     cta: 'Go Pro',
   },
@@ -98,7 +98,7 @@ function CheckIcon() {
 
 export default function PricingPage() {
   const [currentPlan, setCurrentPlan] = useState<PlanId | null>(null);
-  const [loadingPlan, setLoadingPlan] = useState<'larper' | 'pro' | null>(null);
+  const [loadingPlan, setLoadingPlan] = useState<'creator' | 'pro' | null>(null);
 
   useEffect(() => {
     getMe()
@@ -106,12 +106,12 @@ export default function PricingPage() {
       .catch(() => {});
   }, []);
 
-  async function handleUpgrade(plan: 'larper' | 'pro') {
+  async function handleUpgrade(plan: 'creator' | 'pro') {
     if (loadingPlan) return;
     setLoadingPlan(plan);
     try {
       const res = await createCheckout(plan);
-      window.location.href = res.checkoutUrl;
+      window.location.assign(res.checkoutUrl);
     } catch (err) {
       setLoadingPlan(null);
       if (err instanceof ApiError) {
@@ -127,7 +127,7 @@ export default function PricingPage() {
         <PageWrapper>
           <div className={styles.pricingWrap}>
             <div className={styles.heroSection}>
-              <h1 className={styles.title}>Go full larper.</h1>
+              <h1 className={styles.title}>Post more, think less.</h1>
               <p className={styles.subtitle}>
                 More credits, more scenes, more content.
                 Pick the pace that fits you.

@@ -9,9 +9,9 @@ import Spinner from '@/components/ui/Spinner';
 import styles from './account.module.css';
 
 const PLAN_LABEL: Record<MeResponse['plan'], string> = {
-  free: 'Clipper',
-  larper: 'Larper',
-  pro: 'Pro Larper',
+  free: 'Free',
+  creator: 'Creator',
+  pro: 'Pro',
 };
 
 export default function AccountClient() {

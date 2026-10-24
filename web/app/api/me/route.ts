@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getCurrentUser } from "@/lib/auth";
-import { supabase } from "@/lib/supabase";
+import { db } from "@/lib/supabase";
 import type { User } from "@/lib/types";
 
 type MeRow = Pick<User, "plan" | "credits" | "rerolls_remaining" | "unlimited">;
@@ -10,9 +10,6 @@ export async function GET(req: NextRequest) {
   if (!user) {
     return NextResponse.json({ error: "unauthorized" }, { status: 401 });
   }
-
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const db = supabase as any;
 
   let { data, error } = (await db
     .from("users")

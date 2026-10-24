@@ -7,7 +7,7 @@ export const USE_MOCK = false;
 
 export interface MeResponse {
   userId: string;
-  plan: "free" | "larper" | "pro";
+  plan: "free" | "creator" | "pro";
   credits: number;
   rerollsRemaining: number;
   unlimited: boolean;
@@ -24,6 +24,7 @@ export interface CreateGenerationParams {
   withFace: boolean;
   selfieUploadId: string | null;
   count: number;
+  brief: string;
 }
 
 export interface CreateGenerationResponse {
@@ -41,6 +42,7 @@ export interface Asset {
   width: number;
   height: number;
   sceneTag: string;
+  slideText: string | null; // on-screen text for this slide; slide 1 is the hook
   rerollable: boolean;
 }
 
@@ -58,12 +60,21 @@ export interface Sound {
   openUrl: string;
 }
 
+export interface PostSummary {
+  brief: string | null;
+  title: string | null;
+  hashtags: string[];
+}
+
 export interface JobPollingResponse {
   jobId: string;
   status: "processing" | "complete" | "failed";
   progress?: number;
   platform?: string;
   format?: string;
+  post?: PostSummary;
+  brief?: string | null; // echoed on failure so the creator can edit and retry
+  message?: string;      // why a brief was rejected
   assets?: Asset[];
   captions?: Caption[];
   sounds?: Sound[];
@@ -78,6 +89,7 @@ export interface HistoryJob {
   format: "slideshow" | "video";
   count: number;
   withFace: boolean;
+  brief: string | null;
   createdAt: string;
   thumbUrl: string | null;
 }
@@ -209,7 +221,7 @@ export async function rerollAsset(
 }
 
 export async function createCheckout(
-  plan: "larper" | "pro",
+  plan: "creator" | "pro",
 ): Promise<CheckoutResponse> {
   if (USE_MOCK) return mock.mockCheckout;
   return apiFetch<CheckoutResponse>("/billing/checkout", {

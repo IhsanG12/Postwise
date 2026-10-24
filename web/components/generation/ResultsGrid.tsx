@@ -1,38 +1,19 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { rerollAsset, pollGeneration, ApiError, type Asset } from '@/lib/api';
 import { toast } from '@/lib/toast';
+import { downloadSlide, slideFilename } from '@/lib/download';
 import styles from './ResultsGrid.module.css';
 
 const SHIMMER_COUNT = 6;
-
-async function downloadAsset(url: string, filename: string) {
-  try {
-    const res = await fetch(url, { mode: 'cors' });
-    if (!res.ok) throw new Error('fetch failed');
-    const blob = await res.blob();
-    const objectUrl = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = objectUrl;
-    a.download = filename;
-    a.click();
-    URL.revokeObjectURL(objectUrl);
-  } catch {
-    // fallback: open in new tab
-    const a = document.createElement('a');
-    a.href = url;
-    a.target = '_blank';
-    a.rel = 'noopener noreferrer';
-    a.click();
-  }
-}
 
 interface Props {
   assets: Asset[];
   isLoading: boolean;
   format: 'slideshow' | 'video';
   jobId: string;
+  withText: boolean; // show slide text on the tiles and draw it onto downloads
   onRerollSuccess?: (rerollsRemaining: number) => void;
   onUpgradeNeeded?: () => void;
 }
@@ -54,6 +35,7 @@ function AssetTile({
   index,
   isVideo,
   isRerolling,
+  withText,
   onDownload,
   onReroll,
 }: {
@@ -61,7 +43,8 @@ function AssetTile({
   index: number;
   isVideo: boolean;
   isRerolling: boolean;
-  onDownload: (url: string, index: number) => void;
+  withText: boolean;
+  onDownload: (asset: Asset, index: number) => void;
   onReroll: (id: string) => void;
 }) {
   return (
@@ -88,9 +71,15 @@ function AssetTile({
             // eslint-disable-next-line @next/next/no-img-element
             <img
               src={asset.thumbUrl || asset.url}
-              alt={asset.sceneTag || `Scene ${index + 1}`}
+              alt={asset.slideText || `Slide ${index + 1}`}
               className={styles.img}
             />
+          )}
+          {withText && asset.slideText && !isVideo && (
+            // Same placement and style as the text drawn onto downloads (lib/download.ts).
+            <p className={[styles.overlay, index === 0 ? styles.hook : ''].filter(Boolean).join(' ')}>
+              <span>{asset.slideText}</span>
+            </p>
           )}
           <div className={styles.actions}>
             <button
@@ -98,7 +87,7 @@ function AssetTile({
               title="Download"
               onClick={(e) => {
                 e.stopPropagation();
-                onDownload(asset.url, index);
+                onDownload(asset, index);
               }}
             >
               {/* download arrow */}
@@ -120,7 +109,7 @@ function AssetTile({
             {asset.rerollable && (
               <button
                 className={styles.iconBtn}
-                title="Reroll this one"
+                title="Redraw this slide"
                 onClick={(e) => {
                   e.stopPropagation();
                   onReroll(asset.id);
@@ -151,18 +140,18 @@ export default function ResultsGrid({
   isLoading,
   format,
   jobId,
+  withText,
   onRerollSuccess,
   onUpgradeNeeded,
 }: Props) {
-  const [localAssets, setLocalAssets] = useState<Asset[]>(assets);
+  // Fresh copies of assets that were redrawn after the job loaded, by id.
+  // Layered over the `assets` prop instead of copying the prop into state.
+  const [redrawn, setRedrawn] = useState<Record<string, Asset>>({});
   const [rerollingIds, setRerollingIds] = useState<Set<string>>(new Set());
+  const localAssets = assets.map((a) => redrawn[a.id] ?? a);
 
-  useEffect(() => {
-    setLocalAssets(assets);
-  }, [assets]);
-
-  async function handleDownload(url: string, index: number) {
-    await downloadAsset(url, `larp-${index + 1}.jpg`);
+  async function handleDownload(asset: Asset, index: number) {
+    await downloadSlide(asset, slideFilename(asset.type, index), withText);
     toast('Downloaded');
   }
 
@@ -180,8 +169,8 @@ export default function ResultsGrid({
         await new Promise<void>((r) => setTimeout(r, 2000));
         const updated = await pollGeneration(jobId);
         if (updated.assets) {
-          setLocalAssets(updated.assets);
           const newAsset = updated.assets.find((a) => a.id === assetId);
+          if (newAsset) setRedrawn((prev) => ({ ...prev, [assetId]: newAsset }));
           // stop if URL changed or asset is gone (regenerated with new id)
           if (!newAsset || newAsset.url !== oldUrl) break;
         }
@@ -225,6 +214,7 @@ export default function ResultsGrid({
           index={i}
           isVideo={isVideo}
           isRerolling={rerollingIds.has(asset.id)}
+          withText={withText}
           onDownload={handleDownload}
           onReroll={handleReroll}
         />

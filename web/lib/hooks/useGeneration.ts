@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
-import { pollGeneration, type Asset, type Caption, type Sound } from '../api';
+import { pollGeneration, type Asset, type Caption, type Sound, type PostSummary } from '../api';
 
 type PollStatus = 'polling' | 'complete' | 'failed';
 
@@ -11,7 +11,10 @@ export interface UseGenerationResult {
   assets: Asset[];
   captions: Caption[];
   sounds: Sound[];
+  post: PostSummary | null;
   error: string | null;
+  message: string | null; // the planner's reason when error is "brief_rejected"
+  brief: string | null;   // known even when the job failed, for "edit and try again"
   retryable: boolean;
 }
 
@@ -22,7 +25,10 @@ export function useGeneration(jobId: string): UseGenerationResult {
     assets: [],
     captions: [],
     sounds: [],
+    post: null,
     error: null,
+    message: null,
+    brief: null,
     retryable: false,
   });
 
@@ -45,7 +51,10 @@ export function useGeneration(jobId: string): UseGenerationResult {
             assets: data.assets ?? [],
             captions: data.captions ?? [],
             sounds: data.sounds ?? [],
+            post: data.post ?? null,
             error: null,
+            message: null,
+            brief: data.post?.brief ?? null,
             retryable: false,
           });
         } else if (data.status === 'failed') {
@@ -53,6 +62,8 @@ export function useGeneration(jobId: string): UseGenerationResult {
             ...prev,
             status: 'failed',
             error: data.error ?? 'generation_failed',
+            message: data.message ?? null,
+            brief: data.brief ?? null,
             retryable: data.retryable ?? false,
           }));
         } else {

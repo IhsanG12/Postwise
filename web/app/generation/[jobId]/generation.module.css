@@ -206,6 +206,8 @@
 }
 
 .retryBtn {
+  display: inline-block;
+  text-decoration: none;
   border: none;
   cursor: pointer;
   font-weight: 600;

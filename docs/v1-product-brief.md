@@ -1,3 +1,8 @@
+> **Historical document.** This is the original brief for v1, "Larp AI"
+> (June 2026). The product pivoted to Postwise in October 2026 — see the root
+> `README.md` and `CLAUDE.md` for the current product. File names below refer
+> to their v1 locations.
+
 # Larp AI — Project Handoff Brief
 
 A complete summary of the project so anyone (or any new session) can pick it up

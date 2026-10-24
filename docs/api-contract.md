@@ -1,4 +1,4 @@
-# Larp AI — API Contract (v0.1)
+# Postwise — API Contract (v0.2)
 
 This is the agreement between **frontend** and **backend**. The frontend only ever
 calls these endpoints — never an AI provider directly. Keys and model calls live
@@ -31,7 +31,8 @@ Request:
   "format": "slideshow",          // "slideshow" | "video"
   "withFace": true,               // false = faceless mode (skip selfie)
   "selfieUploadId": "upl_abc123", // required if withFace=true, else null
-  "count": 6                      // images for slideshow; ignored for video
+  "count": 6,                     // images for slideshow; ignored for video
+  "brief": "5 study tips that got me through finals week" // what the post is about, 8–400 chars
 }
 ```
 
@@ -49,10 +50,16 @@ Notes:
 - Selfie is uploaded separately first (see §4) so this request stays small JSON.
 - Backend decides credit cost by format (slideshow cheap, video premium).
 - If user lacks credits → `402` with `{ "error": "insufficient_credits" }`.
-- Scenes for every image (slideshow or video) are drawn randomly from one
-  shared scene pool — by design, a single job can mix unrelated settings
-  (e.g. a watch macro, a supercar, a city skyline) rather than staying
-  visually consistent. There is no style/theme selection step.
+- `brief` is required. It's the creator's own description of the post. The
+  backend turns it into a **post plan** (one text-model call): a title, a
+  shared visual look, one scene + on-screen text per slide, captions,
+  hashtags and a sound vibe. Every image in the job is generated from that
+  plan, so a slideshow reads as one post instead of unrelated pictures.
+- Briefs that break the safety rules in `CLAUDE.md` (a real person other than
+  the user, brand logos, fake receipts or earnings) aren't rejected here —
+  the planner decides, and the job fails with `brief_rejected` (see §2). The
+  credit is refunded.
+- Too short / too long brief → `400 { "error": "invalid_request" }`.
 - `estimatedSeconds` differs by format: slideshow scales with `count`
   (~50s/image observed against the current image provider); video uses a
   flat placeholder (currently 90s) since real Replicate generation timings
@@ -81,26 +88,32 @@ When done → `200`:
   "status": "complete",
   "platform": "instagram",
   "format": "slideshow",
+  "post": {
+    "brief": "5 study tips that got me through finals week",
+    "title": "Finals week survival",
+    "hashtags": ["studytok", "finalsweek", "studytips"]
+  },
   "assets": [
     {
       "id": "ast_01",
       "type": "image",                 // "image" | "video"
-      "url": "https://cdn.larpai.app/u/ast_01.jpg",
-      "thumbUrl": "https://cdn.larpai.app/u/ast_01_t.jpg",
+      "url": "https://cdn.example.com/u/ast_01.jpg",
+      "thumbUrl": "https://cdn.example.com/u/ast_01_t.jpg",
       "width": 1080, "height": 1350,
-      "sceneTag": "supercar_night",    // what it is — drives caption relevance
+      "sceneTag": "slide_01",          // position in the plan; assets are sorted by it
+      "slideText": "5 things that saved my finals", // on-screen text for this slide (slide 1 = the hook), null for video
       "rerollable": true
     }
   ],
   "captions": [
-    { "id": "cap_1", "text": "Just another Tuesday 🤍", "tone": "understated" },
-    { "id": "cap_2", "text": "POV: the grind paid off", "tone": "aspirational" }
+    { "id": "cap_1", "text": "saving this for every exam season", "tone": "relatable" },
+    { "id": "cap_2", "text": "tip 3 is the one nobody talks about", "tone": "curious" }
   ],
   "sounds": [
     {
       "id": "snd_1",
-      "title": "luxury ambient (sped up)",
-      "meta": "trending · +340% this week",
+      "title": "No One Noticed — The Marías",
+      "meta": "dreamy",
       "platform": "instagram",
       "openUrl": "https://www.instagram.com/reels/audio/..." // opens in-app
     }
@@ -108,10 +121,14 @@ When done → `200`:
 }
 ```
 
-Failure → `200` with `{ "status": "failed", "error": "generation_failed", "retryable": true }`.
+Failure → `200` with `{ "status": "failed", "error": "generation_failed", "retryable": true, "brief": "..." }`.
 
-KEY POINT: `captions` and `sounds` are generated **inside this job**, informed by the
-`sceneTag`s of the assets actually produced + the platform. They change every
+Brief rejected by the planner → `200` with
+`{ "status": "failed", "error": "brief_rejected", "message": "Postwise can't make posts about other real people.", "retryable": false, "brief": "..." }`.
+`brief` is echoed back so the frontend can send the user back to edit it.
+
+KEY POINT: `captions`, `hashtags`, slide text and `sounds` all come from the job's
+post plan, which is built from the brief + the platform. They change every
 generation. Frontend just renders these arrays — no client-side caption logic.
 
 For `format: "video"`, `assets` is always a single-element array: one
@@ -134,7 +151,8 @@ Response `202`:
 ```
 
 Then poll `GET /api/generations/{jobId}` again; the asset with that `id` will have a
-new `url` once `status` is back to `complete`. (Optionally backend exposes
+new `url` once `status` is back to `complete`. A reroll redraws **the same slide**
+of the plan (same scene and slide text, new image), so the post stays consistent. (Optionally backend exposes
 `GET /api/generations/{jobId}/assets/{assetId}` to poll just the one asset.)
 
 If out of rerolls → `402 { "error": "no_rerolls_remaining" }`.
@@ -164,7 +182,7 @@ Notes:
 ```json
 {
   "userId": "usr_1",
-  "plan": "free",                 // "free" | "larper" | "pro"
+  "plan": "free",                 // "free" | "creator" | "pro"
   "credits": 7,
   "rerollsRemaining": 5,
   "unlimited": false
@@ -180,7 +198,7 @@ Notes:
 Request:
 ```json
 {
-  "plan": "larper"                // "larper" | "pro"
+  "plan": "creator"               // "creator" | "pro"
 }
 ```
 
@@ -246,7 +264,8 @@ Response `200`:
       "count": 6,
       "withFace": false,
       "createdAt": "2026-07-04T14:03:35.026Z",
-      "thumbUrl": "https://cdn.larpai.app/u/ast_01_t.jpg"  // null if no asset yet
+      "brief": "5 study tips that got me through finals week",
+      "thumbUrl": "https://cdn.example.com/u/ast_01_t.jpg"  // null if no asset yet
     }
   ],
   "hasMore": false
@@ -259,7 +278,7 @@ Notes:
 - Frontend links each row to `/results/{jobId}?platform=...&format=...` (same
   page used right after generation completes).
 - Frontend also offers "Regenerate" per row, which pre-fills the home picker
-  via `/?platform=...&format=...&withFace=...` — it does NOT reuse the
+  via `/?platform=...&format=...&withFace=...&brief=...` — it does NOT reuse the
   original `selfieUploadId` (selfies are deleted after use, see §4), so a
   `withFace: true` row sends the user to re-upload before generating.
 
@@ -318,7 +337,7 @@ If the job doesn't exist or belongs to another user → `404`:
 { "error": "machine_code", "message": "Human-readable, shown if useful." }
 ```
 Common codes: `insufficient_credits`, `no_rerolls_remaining`, `invalid_upload`,
-`generation_failed`, `unauthorized`, `rate_limited`.
+`generation_failed`, `brief_rejected`, `unauthorized`, `rate_limited`.
 
 ---
 
@@ -334,5 +353,5 @@ Common codes: `insufficient_credits`, `no_rerolls_remaining`, `invalid_upload`,
 ## Things deliberately NOT in the frontend
 - No API keys, ever.
 - No direct calls to Gemini / video / text models.
-- No caption or sound logic — those arrive in the job response.
+- No caption, hashtag, slide-text or sound logic — those arrive in the job response.
 - No image storage logic — backend returns CDN URLs.
